@@ -1,0 +1,34 @@
+{
+  "name": "lawmakers-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "lawmakers-manager": "update-from-propublica.js"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "update-retiring": "node bin/update-retiring",
+    "pull": "node bin/update-from-propublica",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/townhallproject/lawmakers-manager.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/townhallproject/lawmakers-manager/issues"
+  },
+  "homepage": "https://github.com/townhallproject/lawmakers-manager#readme",
+  "dependencies": {
+    "firebase-admin": "^5.12.1",
+    "superagent": "^3.8.3"
+  },
+  "devDependencies": {
+    "dotenv": "^6.0.0"
+  }
+}
