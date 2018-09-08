@@ -12,7 +12,8 @@
   "scripts": {
     "update-retiring": "node bin/update-retiring",
     "pull": "node bin/update-from-propublica",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
   },
   "homepage": "https://github.com/townhallproject/lawmakers-manager#readme",
   "dependencies": {
+    "express": "^4.16.3",
     "firebase-admin": "^5.12.1",
     "superagent": "^3.8.3"
   },
