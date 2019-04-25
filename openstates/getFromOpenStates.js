@@ -1,5 +1,6 @@
 const superagent = require('superagent');
-
+// const firebasedb = require('../lib/setupFirebase.js');
+const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 function generateQueryString(stateName) {
     return `query={
       jurisdiction(name: "${stateName}") {
@@ -38,6 +39,16 @@ function generateQueryString(stateName) {
       }
   }`
 };
+
+const test = `query={
+  people {
+    edges {
+      node {
+        name
+      }
+    }
+  }
+}`
 
 function transformOpenStatesData(receivedData) {
     // Entire object of people to be stored
@@ -126,17 +137,68 @@ const stateCodes = {
     'Pennsylvania': 'PA',
     'Florida': 'FL'
 };
+const checkIsNew = (openStatesMember) => {
+  const path = 'state_legislators_data';
+  const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
+  return firebasedb.ref(ref).once('value')
+    .then((snapshot) => {
+      console.log(snapshot.exists())
+      return snapshot.exists();
+    })
+}
 
+const getMemberKey = (name) => {
+      let memberKey;
+      if (name.split(' ').length === 3) {
+        memberKey = name.split(' ')[1].toLowerCase() + name.split(' ')[2].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
+      } else {
+        memberKey = name.split(' ')[1].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
+      }
+      return memberKey.replace(/\W/g, '');
+}
+
+const createNew = (openStatesMember) => {
+  let updates = {};
+
+  const memberKey = getMemberKey(openStatesMember.displayName);
+  const memberIDObject = {
+    id: openStatesMember.thp_id,
+    nameEntered: openStatesMember.displayName,
+  };
+  const dataPath = 'state_legislators_data';
+  const idPath = 'state_legislators_id';
+  const dataRef = `${dataPath}/${openStatesMember.state}/${openStatesMember.thp_id}`;
+
+  updates[dataRef] = openStatesMember;
+  updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
+  console.log(updates)
+  // return firebasedb.ref().update(updates);
+}
 // Iterate through the state names and pull the data from Open States graph ql API
 // UPDATE THE OPEN STATES API KEY
 Object.keys(stateCodes).forEach(stateName => {
     superagent
         .post('https://openstates.org/graphql')
         .set('X-API-Key', OpenStatesAPIKey)
-        .send(generateQueryString('Nevada'))
+        .send(test)
         .then((data) => {
             return transformOpenStatesData(data.body);
         })
         .then(console.log)
         .catch(console.error);
 });
+
+          //  Object.keys(data).forEach(memberId => {
+          //        const member = data[memberId];
+          //        member.thp_id = memberId;
+          //        console.log(member.memberId)
+      // checkIsNew(member)
+      // .then((isNew) => {
+      //   if (isNew) {
+      //       console.log('is new')
+      //       member.displayName = member.openStatesDisplayName;
+      //       createNew(member)
+      //     } else {
+      //       console.log('not new')
+      //     }
+      //   })
