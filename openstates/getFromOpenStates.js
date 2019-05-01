@@ -1,5 +1,7 @@
+require('dotenv').load();
+
 const superagent = require('superagent');
-// const firebasedb = require('../lib/setupFirebase.js');
+const firebasedb = require('../lib/setupFirebase.js');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 function generateQueryString(stateName) {
     return `query={
@@ -137,13 +139,13 @@ const stateCodes = {
     'Pennsylvania': 'PA',
     'Florida': 'FL'
 };
-const checkIsNew = (openStatesMember) => {
+
+const checkIsInDb = (openStatesMember) => {
   const path = 'state_legislators_data';
   const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
   return firebasedb.ref(ref).once('value')
     .then((snapshot) => {
-      console.log(snapshot.exists())
-      return snapshot.exists();
+      return snapshot.exists() ? true : false;
     })
 }
 
@@ -171,34 +173,42 @@ const createNew = (openStatesMember) => {
 
   updates[dataRef] = openStatesMember;
   updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
-  console.log(updates)
-  // return firebasedb.ref().update(updates);
+  return firebasedb.ref().update(updates)
+      .catch(console.log)
 }
+
+const update = (member) => {
+  const dataPath = 'state_legislators_data';
+  const dataRef = `${dataPath}/${member.state}/${member.thp_id}`;
+  return firebasedb.ref(dataRef).update(member)
+    .catch(console.log)
+
+}
+
 // Iterate through the state names and pull the data from Open States graph ql API
 // UPDATE THE OPEN STATES API KEY
 Object.keys(stateCodes).forEach(stateName => {
     superagent
         .post('https://openstates.org/graphql')
         .set('X-API-Key', OpenStatesAPIKey)
-        .send(test)
+        .send(generateQueryString(stateName))
         .then((data) => {
             return transformOpenStatesData(data.body);
         })
-        .then(console.log)
+        .then((lawmakers) => {
+          Object.keys(lawmakers).forEach(memberId => {
+            const member = lawmakers[memberId];
+            member.thp_id = memberId;
+            checkIsInDb(member)
+              .then((isInDatabase) => {
+                if (isInDatabase) {
+                    update(member);
+                  } else {
+                    member.displayName = member.openStatesDisplayName;
+                    createNew(member);
+                  }
+                })
+          })
+        })
         .catch(console.error);
 });
-
-          //  Object.keys(data).forEach(memberId => {
-          //        const member = data[memberId];
-          //        member.thp_id = memberId;
-          //        console.log(member.memberId)
-      // checkIsNew(member)
-      // .then((isNew) => {
-      //   if (isNew) {
-      //       console.log('is new')
-      //       member.displayName = member.openStatesDisplayName;
-      //       createNew(member)
-      //     } else {
-      //       console.log('not new')
-      //     }
-      //   })
