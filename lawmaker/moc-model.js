@@ -7,6 +7,7 @@ class Moc {
         for (let keys in opts) {
             this[keys] = opts[keys];
         }
+        this.govtrack_id = opts.govtrack_id || id;
         this.propublica_id = opts.propublica_id || opts.member_id
         this.propublica_facebook = opts.facebook_account;
         if (parseInt(this.propublica_facebook)) {
@@ -51,14 +52,15 @@ class Moc {
         const lastname = this.last_name.replace(/\W/g, '');
         const firstname = this.first_name.replace(/\W/g, '');
         const memberKey = lastname.toLowerCase() + '_' + firstname.toLowerCase();
-
+        const govtrack_id = this.govtrack_id || newPropublicaMember.govtrack_id
         const memberIDObject = {
-            id: this.govtrack_id,
+            id: govtrack_id,
             nameEntered: this.displayName,
         };
 
-        updates['/mocData/' + this.govtrack_id] = this;
+        updates['/mocData/' + govtrack_id] = this;
         updates['/mocID/' + memberKey] = memberIDObject;
+        console.log(updates)
         return firebasedb.ref().update(updates);
     }
 
@@ -89,7 +91,6 @@ class Moc {
             }
             path = `mocByStateDistrict/${moc.state}-${district}/`;
         }
-        console.log(path, obj);
         return firebasedb.ref(path).update(obj);
     }
 

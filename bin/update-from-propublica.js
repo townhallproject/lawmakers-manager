@@ -46,20 +46,21 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
         // check against propublica specific member search using id
         getSpecificMember(new_propub_member.api_uri)
             .then(function (fullPropPublicaMember) {
-                let newMember = new Moc(fullPropPublicaMember);
-                newMember.type = type;
                 if (!fullPropPublicaMember.govtrack_id) {
                     const mapping = {
                         H001079: 412743,
                         L000588: 412744,
                         L000589: 412745,
+                        B001306: 412747,
                     }
                     fullPropPublicaMember.govtrack_id = mapping[fullPropPublicaMember.member_id] || null;
                     if (!fullPropPublicaMember.govtrack_id) {
-                        return console.log('no govtrack_id', fullPropPublicaMember.first_name, fullPropPublicaMember.last_name, fullPropPublicaMember.member_id)
+                        return console.log('no govtrack_id', newMember.first_name, fullPropPublicaMember.last_name, fullPropPublicaMember.member_id)
                     }
                 }
-                let path = '/mocData/' + fullPropPublicaMember.govtrack_id;
+                let newMember = new Moc(fullPropPublicaMember);
+                newMember.type = type;
+                let path = '/mocData/' + newMember.govtrack_id;
                 firebasedb.ref(path).once('value').then(function (snapshot) {
                     if (!snapshot.exists()) {
                         console.log('creating new', fullPropPublicaMember.govtrack_id)
