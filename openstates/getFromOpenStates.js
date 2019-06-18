@@ -131,13 +131,17 @@ function transformOpenStatesData(receivedData) {
 
 // Add states we want to query for to the map
 const stateCodes = {
-    'Nevada': 'NV',
-    'Arizona': 'AZ',
-    'Michigan': 'MI',
-    'Maryland': 'MD',
-    'Maine': 'ME',
-    'Pennsylvania': 'PA',
-    'Florida': 'FL'
+  'Arizona': 'AZ',
+  'Colorado': 'CO',
+  'Florida': 'FL',
+  'Maryland': 'MD',
+  'Michigan': 'MI',
+  'Maine': 'ME',
+  'Nevada': 'NV',
+  'North Carolina': 'NC',
+  'Oregon': 'OR',
+  'Pennsylvania': 'PA',
+  'Virginia': 'VA',
 };
 
 const checkIsInDb = (openStatesMember) => {
@@ -204,6 +208,7 @@ Object.keys(stateCodes).forEach(stateName => {
                 if (isInDatabase) {
                     update(member);
                   } else {
+                    console.log('creating new', member.openStatesDisplayName)
                     member.displayName = member.openStatesDisplayName;
                     createNew(member);
                   }
