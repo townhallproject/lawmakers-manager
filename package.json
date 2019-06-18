@@ -12,6 +12,7 @@
   "scripts": {
     "update-retiring": "node bin/update-retiring",
     "pull": "node bin/update-from-propublica",
+    "get-state-people": "node openstates/get-from-open-states.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },

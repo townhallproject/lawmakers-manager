@@ -7,7 +7,7 @@ const  { map, find }  = require('lodash');
 const Moc = require('../lawmaker/moc-model');
 const propublicaAPI = process.env.PROPUBLICA;
 
-const oldUrl = 'https://api.propublica.org/congress/v1/115/house/members/leaving.json'
+const oldUrl = 'https://api.propublica.org/congress/v1/116/house/members/leaving.json'
 
 function getRetiringMembers() {
     return request
