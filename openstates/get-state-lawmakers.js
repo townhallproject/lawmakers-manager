@@ -238,9 +238,6 @@ Object.keys(stateCodes).forEach(stateName => {
         .then((data) => {
             return transformOpenStatesLegislatorsData(data.body);
         })
-        .then((data) => {
-            console.log(data);
-        })
         .then((lawmakers) => {
           Object.keys(lawmakers).forEach(memberId => {
             const member = lawmakers[memberId];
@@ -271,5 +268,5 @@ Object.values(stateCodes).forEach(stateCode => {
         .then((data) => {
             console.log(data);
         })
-        .catch(console.error);
+        .catch((e) => console.error(e.message));
 });
