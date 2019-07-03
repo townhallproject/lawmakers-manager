@@ -5,7 +5,7 @@ const ErrorReport = require('../lib/errorReporting.js');
 const Moc = require('../lawmaker/moc-model');
 
 const propublicaAPI = process.env.PROPUBLICA;
-const newUrl = 'https://api.propublica.org/congress/v1/115/house/members.json';
+const newUrl = 'https://api.propublica.org/congress/v1/116/senate/members.json';
 
 function getNewMembers() {
     return request
@@ -30,21 +30,21 @@ function getSpecificMember(url) {
                 let data = JSON.parse(res.text);
                 return data.results[0];
             } catch (e) {
-                console.log(e);
+                console.log(e.message);
+                return Promise.reject();
             }
         });
 }
 
 function updateDatabaseWithNewMembers(newPropublicaMembers) {
     newPropublicaMembers.forEach(function (new_propub_member) {
-        
         // check against propublica specific member search using id
         getSpecificMember(new_propub_member.api_uri)
             .then(function (fullPropPublicaMember) {
                 fullPropPublicaMember.chamber = new_propub_member.chamber === 'House' ? 'lower' : 'upper';
-                let newMember = new Moc(fullPropPublicaMember); 
+                let newMember = new Moc(fullPropPublicaMember);
                 let collection = newMember.chamber === 'lower' ? 'house_reps' : 'senators';
-                let officePeopleRef = firebasedb.collection(collection);
+                let officePeopleRef = firebasedb.firestore.collection(collection);
                 let queryRef = officePeopleRef.where('id', '==', fullPropPublicaMember.member_id);
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {
@@ -69,9 +69,9 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 // call propublica 'new members' api endpoint
 getNewMembers()
     .then(function (newMembers) {
-        console.log('got all new members');
+        console.log('got all new members', newMembers);
         updateDatabaseWithNewMembers(newMembers);
     })
     .catch(function (error) {
-        console.log('Uh oh, something went wrong getting new members ', error);
+        console.log('Uh oh, something went wrong getting new members ', error.message);
     });

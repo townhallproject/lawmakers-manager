@@ -147,7 +147,7 @@ const stateCodes = {
 const checkIsInDb = (openStatesMember) => {
   const path = 'state_legislators_data';
   const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-  return firebasedb.ref(ref).once('value')
+  return firebasedb.realtimedb.ref(ref).once('value')
     .then((snapshot) => {
       return snapshot.exists() ? true : false;
     })
@@ -177,14 +177,14 @@ const createNew = (openStatesMember) => {
 
   updates[dataRef] = openStatesMember;
   updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
-  return firebasedb.ref().update(updates)
+  return firebasedb.realtimedb.ref().update(updates)
       .catch(console.log)
 }
 
 const update = (member) => {
   const dataPath = 'state_legislators_data';
   const dataRef = `${dataPath}/${member.state}/${member.thp_id}`;
-  return firebasedb.ref(dataRef).update(member)
+  return firebasedb.realtimedb.ref(dataRef).update(member)
     .catch(console.log)
 
 }
