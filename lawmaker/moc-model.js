@@ -43,7 +43,7 @@ class Moc {
     }
 
     createNew(newPropublicaMember) {
-        let updates = firebasedb.batch();
+        let updates = firebasedb.firestore.batch();
         this.displayName = this.first_name + ' ' + this.last_name;
         this.state = newPropublicaMember.roles[0].state;
         this.end_date = newPropublicaMember.roles[0].end_date;
@@ -58,16 +58,16 @@ class Moc {
             id: this.propublica_id,
             govtrack_id: govtrack_id,
             display_name: this.displayName,
-            in_office: true,         
+            in_office: true,
         };
 
         // Set the data object
-        var personDataRef = firebasedb.collection('office_people').doc(this.propublica_id);
+        var personDataRef = firebasedb.firestore.collection('office_people').doc(this.propublica_id);
         updates.set(personDataRef, newPropublicaMember);
 
         // Add to the lookup table
         const collection = this.chamber === 'upper' ? 'senators': 'house_reps';
-        var collectionRef = firebasedb.collection(collection).doc(this.propublica_id);
+        var collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
         updates.set(collectionRef, memberIDObject);
 
         return updates.commit().then(function () {
@@ -77,7 +77,7 @@ class Moc {
 
     update(collection) {
         console.log(this)
-        const ref = firebasedb.collection('office_people').doc(this.id);
+        const ref = firebasedb.firestore.collection('office_people').doc(this.id);
         ref.update(this);
     }
 
@@ -115,7 +115,7 @@ class Moc {
     //             });
     //         });
     // };
-    
+
     // static loadAllData() {
     //     var allMocs = [];
     //     return new Promise(function (resolve, reject) {

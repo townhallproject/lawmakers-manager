@@ -3,7 +3,26 @@ require('dotenv').load();
 const superagent = require('superagent');
 const firebasedb = require('../lib/setupFirebase.js');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
-function generateQueryString(stateName) {
+const GoogleCivicsAPIKey = process.env.GOOGLE_CIVICS_API_KEY;
+const GoogleCivicsBaseURL = 'https://www.googleapis.com/civicinfo/v2/representatives'
+
+// Add states we want to query for to the map
+const stateCodes = {
+    'Nevada': 'NV',
+    'Arizona': 'AZ',
+    'Michigan': 'MI',
+    'Maryland': 'MD',
+    'Maine': 'ME',
+    'Pennsylvania': 'PA',
+    'Florida': 'FL'
+};
+
+function generateGoogleCivicsQueryString(stateCode) {
+    stateCode = stateCode.toLowerCase();
+    ocdId = `ocd-division%2Fcountry%3Aus%2Fstate%3A${stateCode}`;
+    return `${GoogleCivicsBaseURL}/${ocdId}`;
+};
+function generateOpenStatesQueryString(stateName) {
     return `query={
       jurisdiction(name: "${stateName}") {
         id
@@ -52,7 +71,7 @@ const test = `query={
   }
 }`
 
-function transformOpenStatesData(receivedData) {
+function transformOpenStatesLegislatorsData(receivedData) {
     // Entire object of people to be stored
     // Keys are the formatted strings of '${state}-${districtType}-${districtNumber}-${increment}',
     let legislators = {};
@@ -129,25 +148,46 @@ function transformOpenStatesData(receivedData) {
     return legislators;
 };
 
-// Add states we want to query for to the map
-const stateCodes = {
-  'Arizona': 'AZ',
-  'Colorado': 'CO',
-  'Florida': 'FL',
-  'Maryland': 'MD',
-  'Michigan': 'MI',
-  'Maine': 'ME',
-  'Nevada': 'NV',
-  'North Carolina': 'NC',
-  'Oregon': 'OR',
-  'Pennsylvania': 'PA',
-  'Virginia': 'VA',
+function transformGoogleCivicsStateHeadsData(receivedData) {
+    // Reference: https://developers.google.com/civic-information/docs/v2/representatives/representativeInfoByDivision
+
+    // Create short references
+    // There should only ever be a single state returned from the divisions branch
+    // so shorten by choosing first value from the object
+    let stateInfo = Object.values(receivedData.divisions)[0];
+    let governor = receivedData.officials[0];
+
+    // Construct basic object
+    let formatted = {
+        'displayName': governor['name'],
+        'party': governor['party'].replace(' Party', ''),
+        'chamber': 'statewide',
+        'in_office': true,
+        'role': 'Governor',
+        'stateName': stateInfo.name,
+        'state': stateCodes[stateInfo.name]
+    };
+
+    // Add contact values when available
+    if ('phones' in governor) {
+        formatted['phone'] = governor.phones[0];
+    };
+    if ('channels' in governor) {
+        governor.channels.forEach(channel => {
+            formatted[channel.type.toLowerCase()] = channel.id;
+        });
+    };
+    if ('photoUrl' in governor) {
+        formatted['photoUrl'] = governor.photoUrl;
+    };
+
+    return formatted;
 };
 
 const checkIsInDb = (openStatesMember) => {
   const path = 'state_legislators_data';
   const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-  return firebasedb.ref(ref).once('value')
+  return firebasedb.realtimedb.ref(ref).once('value')
     .then((snapshot) => {
       return snapshot.exists() ? true : false;
     })
@@ -177,27 +217,26 @@ const createNew = (openStatesMember) => {
 
   updates[dataRef] = openStatesMember;
   updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
-  return firebasedb.ref().update(updates)
+  return firebasedb.realtimedb.ref().update(updates)
       .catch(console.log)
 }
 
 const update = (member) => {
   const dataPath = 'state_legislators_data';
   const dataRef = `${dataPath}/${member.state}/${member.thp_id}`;
-  return firebasedb.ref(dataRef).update(member)
+  return firebasedb.realtimedb.ref(dataRef).update(member)
     .catch(console.log)
 
 }
 
-// Iterate through the state names and pull the data from Open States graph ql API
-// UPDATE THE OPEN STATES API KEY
+// Iterate through the state names and pull the data from Open States GraphQL API
 Object.keys(stateCodes).forEach(stateName => {
     superagent
         .post('https://openstates.org/graphql')
         .set('X-API-Key', OpenStatesAPIKey)
-        .send(generateQueryString(stateName))
+        .send(generateOpenStatesQueryString(stateName))
         .then((data) => {
-            return transformOpenStatesData(data.body);
+            return transformOpenStatesLegislatorsData(data.body);
         })
         .then((lawmakers) => {
           Object.keys(lawmakers).forEach(memberId => {
@@ -208,7 +247,6 @@ Object.keys(stateCodes).forEach(stateName => {
                 if (isInDatabase) {
                     update(member);
                   } else {
-                    console.log('creating new', member.openStatesDisplayName)
                     member.displayName = member.openStatesDisplayName;
                     createNew(member);
                   }
@@ -216,4 +254,19 @@ Object.keys(stateCodes).forEach(stateName => {
           })
         })
         .catch(console.error);
+});
+
+// Iterate through the state codes and pull the state head data from the Google Civics API
+Object.values(stateCodes).forEach(stateCode => {
+    superagent
+        .get(generateGoogleCivicsQueryString(stateCode))
+        .set('Accept', 'application/json')
+        .query({roles: 'headofGovernment', key: GoogleCivicsAPIKey})
+        .then((data) => {
+            return transformGoogleCivicsStateHeadsData(data.body)
+        })
+        .then((data) => {
+            console.log(data);
+        })
+        .catch((e) => console.error(e.message));
 });
