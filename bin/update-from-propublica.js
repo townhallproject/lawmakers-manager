@@ -5,7 +5,8 @@ const ErrorReport = require('../lib/errorReporting.js');
 const Moc = require('../lawmaker/moc-model');
 
 const propublicaAPI = process.env.PROPUBLICA;
-const newUrl = 'https://api.propublica.org/congress/v1/115/house/members.json';
+const newUrl = 'https://api.propublica.org/congress/v1/members/new.json';
+const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
 
 function getNewMembers() {
     return request
