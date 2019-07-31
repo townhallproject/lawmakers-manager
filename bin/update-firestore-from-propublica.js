@@ -6,10 +6,12 @@ const Moc = require('../lawmaker/moc-model');
 
 const propublicaAPI = process.env.PROPUBLICA;
 const newUrl = 'https://api.propublica.org/congress/v1/members/new.json';
+const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
+const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
 
 function getNewMembers() {
     return request
-        .get(newUrl)
+        .get(wholeSenate)
         .set('X-API-Key', propublicaAPI)
         .then((res) => {
             try {
@@ -30,52 +32,38 @@ function getSpecificMember(url) {
                 let data = JSON.parse(res.text);
                 return data.results[0];
             } catch (e) {
-                console.log(e);
+                console.log(e.message);
+                return Promise.reject();
             }
         });
 }
 
 function updateDatabaseWithNewMembers(newPropublicaMembers) {
     newPropublicaMembers.forEach(function (new_propub_member) {
-        let type;
-        if (new_propub_member.chamber == 'House') {
-            type = 'rep';
-        } else {
-            type = 'sen';
-        }
         // check against propublica specific member search using id
         getSpecificMember(new_propub_member.api_uri)
             .then(function (fullPropPublicaMember) {
-                if (!fullPropPublicaMember.govtrack_id) {
-                    const mapping = {
-                        H001079: 412743,
-                        L000588: 412744,
-                        L000589: 412745,
-                        B001306: 412747,
-                    }
-                    fullPropPublicaMember.govtrack_id = mapping[fullPropPublicaMember.member_id] || null;
-                    if (!fullPropPublicaMember.govtrack_id) {
-                        return console.log('no govtrack_id', newMember.first_name, fullPropPublicaMember.last_name, fullPropPublicaMember.member_id)
-                    }
-                }
+                fullPropPublicaMember.chamber = new_propub_member.chamber === 'House' ? 'lower' : 'upper';
                 let newMember = new Moc(fullPropPublicaMember);
-                newMember.type = type;
-                let path = '/mocData/' + newMember.govtrack_id;
-                firebasedb.ref(path).once('value').then(function (snapshot) {
-                    if (!snapshot.exists()) {
+                let collection = newMember.chamber === 'lower' ? 'house_reps' : 'senators';
+                let officePeopleRef = firebasedb.firestore.collection(collection);
+                let queryRef = officePeopleRef.where('id', '==', fullPropPublicaMember.member_id);
+                queryRef.get().then(function (querySnapshot) {
+                    if (querySnapshot.empty) {
                         console.log('creating new', fullPropPublicaMember.govtrack_id)
                         return newMember.createNew(fullPropPublicaMember).then(Moc.makeNewEndpoints)
-
                     }
-                    return newMember.update(path)
+                    // return newMember.update(collection)
                     }).catch(function(error){
+                        console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
-                      errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
-                    });
+                    //   errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
+                    })
             })
             .catch(function (error) {
-                let errorEmail = new ErrorReport(new_propub_member.id + ':' + error, 'Could not update existing moc');
-                errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
+                // let errorEmail = new ErrorReport(new_propub_member.id + ':' + error, 'Could not update existing moc');
+                // errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
+                console.log(error)
             });
     });
 }
@@ -83,9 +71,9 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 // call propublica 'new members' api endpoint
 getNewMembers()
     .then(function (newMembers) {
-        console.log('got all new members');
+        console.log('got all new members', newMembers);
         updateDatabaseWithNewMembers(newMembers);
     })
     .catch(function (error) {
-        console.log('Uh oh, something went wrong getting new members ', error);
+        console.log('Uh oh, something went wrong getting new members ', error.message);
     });

@@ -28,8 +28,9 @@
   "homepage": "https://github.com/townhallproject/lawmakers-manager#readme",
   "dependencies": {
     "express": "^4.16.3",
-    "firebase-admin": "^5.12.1",
+    "firebase-admin": "^5.13.1",
     "mailgun-js": "^0.20.0",
+    "moment": "^2.24.0",
     "superagent": "^3.8.3"
   },
   "devDependencies": {
