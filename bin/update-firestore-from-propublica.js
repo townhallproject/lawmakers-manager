@@ -7,10 +7,11 @@ const Moc = require('../lawmaker/moc-model');
 const propublicaAPI = process.env.PROPUBLICA;
 const newUrl = 'https://api.propublica.org/congress/v1/members/new.json';
 const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
+const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
 
 function getNewMembers() {
     return request
-        .get(newUrl)
+        .get(wholeSenate)
         .set('X-API-Key', propublicaAPI)
         .then((res) => {
             try {
