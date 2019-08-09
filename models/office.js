@@ -1,10 +1,10 @@
-const Committee = require('../models/committee');
-
-class Role {
+const Committee = require('./committee');
+const stateNameLookup = require('../data/stateMap');
+class Office {
     constructor(id, state, stateName, chamber) {
         this.thp_id = id;
         this.state = state;
-        this.stateName = stateName;
+        this.stateName = stateNameLookup[state];
         this.chamber = chamber;
     };
 
@@ -33,4 +33,4 @@ class Role {
 
 };
 
-module.exports = Role;
+module.exports = Office;
