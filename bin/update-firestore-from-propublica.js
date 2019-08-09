@@ -11,7 +11,7 @@ const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.j
 
 function getNewMembers() {
     return request
-        .get(wholeSenate)
+        .get(newUrl)
         .set('X-API-Key', propublicaAPI)
         .then((res) => {
             try {
@@ -53,7 +53,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                         console.log('creating new', fullPropPublicaMember.govtrack_id)
                         return newMember.createNew(fullPropPublicaMember).then(Moc.makeNewEndpoints)
                     }
-                    // return newMember.update(collection)
+                    return newMember.createNew(fullPropPublicaMember).then(Moc.makeNewEndpoints)
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
