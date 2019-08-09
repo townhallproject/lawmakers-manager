@@ -2,8 +2,8 @@ require('dotenv').load();
 
 const superagent = require('superagent');
 const firebase = require('../lib/setupFirebase.js');
-const getStates = require('../lib/get-states');
-
+const getStates = require('../lib/get-included-state-legs');
+const StateLawmaker = require('../models/state-lawmaker');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 
 function generateOpenStatesQueryString(stateName) {
@@ -45,15 +45,6 @@ function generateOpenStatesQueryString(stateName) {
   }`
 };
 
-const test = `query={
-  people {
-    edges {
-      node {
-        name
-      }
-    }
-  }
-}`
 
 function transformOpenStatesLegislatorsData(receivedData) {
     // Entire object of people to be stored
@@ -77,6 +68,8 @@ function transformOpenStatesLegislatorsData(receivedData) {
 
         // Process each member
         org.node.members.forEach(person => {
+            let id = person.person.id.replace('ocd-person/', '');
+
             // Match district type short code
             let chamberName = org.node.name.toLowerCase();
             let districtShortType = '';
@@ -120,8 +113,7 @@ function transformOpenStatesLegislatorsData(receivedData) {
                 toAddMember[contactDetail.type] = contactDetail.value;
             });
 
-            // Construct the thp lookup key
-            let id = person.person.id.replace('ocd-person/', '');
+            // // Construct the thp lookup key
 
             // Attach member to legislators map
             legislators[id] = toAddMember;
@@ -132,22 +124,15 @@ function transformOpenStatesLegislatorsData(receivedData) {
     return legislators;
 };
 
+// TODO: check if for other matches. 
+// if we've manually entered a person, want to have that return here too. 
+
 const checkIsInDb = (openStatesMember) => {
-    const path = 'state_legislators_data';
-    const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
     let stateLegRef = firebase.firestore.collection(`${openStatesMember.state}_state_legislature`)
-    console.log(`storing next stage lawmaker in collection: ${openStatesMember.state}`);
-    let queryRef = stateLegRef.where('id', '==', openStatesMember.thp_id)
-    // return queryRef.once('value')
-    // .then((snapshot) => {
-    //   return snapshot.exists();
-    // })
-    queryRef.get().then(function (querySnapshot) {
-        if (querySnapshot.empty) {
-            console.log('creating new', openStatesMember.thp_id)
-            // return newMember.createNew(fullProPublicaMember).then(Moc.makeNewEndpoints)
-        }
-        // return newMember.update(collection)
+    let queryRef = stateLegRef.where('id', '==', openStatesMember.id)
+
+    return queryRef.get().then(function (querySnapshot) {
+        return !querySnapshot.empty;
         }).catch(function(error){
             console.log(error)
           let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
@@ -155,44 +140,9 @@ const checkIsInDb = (openStatesMember) => {
         })
 }
 
-const getMemberKey = (name) => {
-      let memberKey;
-      if (name.split(' ').length === 3) {
-        memberKey = name.split(' ')[1].toLowerCase() + name.split(' ')[2].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
-      } else {
-        memberKey = name.split(' ')[1].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
-      }
-      return memberKey.replace(/\W/g, '');
-}
-
-const createNew = (openStatesMember) => {
-  let updates = {};
-
-  const memberKey = getMemberKey(openStatesMember.displayName);
-  const memberIDObject = {
-    id: openStatesMember.thp_id,
-    nameEntered: openStatesMember.displayName,
-  };
-  const dataPath = 'state_legislators_data';
-  const idPath = 'state_legislators_id';
-  const dataRef = `${dataPath}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-
-  updates[dataRef] = openStatesMember;
-  updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
-  return firebase.realtimedb.ref().update(updates)
-      .catch(console.log)
-}
-
-const update = (member) => {
-  const dataPath = 'state_legislators_data';
-  const dataRef = `${dataPath}/${member.state}/${member.thp_id}`;
-  return firebase.realtimedb.ref(dataRef).update(member)
-    .catch(console.log)
-}
-
 async function getStateLegs() {
   stateCodes = await getStates().catch((err) => {
-    console.log(err);
+    console.log('err getting state legs list', err);
   });
   // Iterate through the state names and pull the data from Open States GraphQL API
   Object.keys(stateCodes).forEach(stateName => {
@@ -201,22 +151,29 @@ async function getStateLegs() {
       .set('X-API-Key', OpenStatesAPIKey)
       .send(generateOpenStatesQueryString(stateName))
       .then((data) => {
+        console.log('got data')
         return transformOpenStatesLegislatorsData(data.body);
       })
       .then((lawmakers) => {
         Object.keys(lawmakers).forEach(memberId => {
-          const member = lawmakers[memberId];
-          member.thp_id = memberId;
-          checkIsInDb(member)
+          const person = lawmakers[memberId]
+          const newOfficePerson = new StateLawmaker(memberId, person.state, true)
+          person.id = memberId;
+
+          checkIsInDb(person)
             .then((isInDatabase) => {
               if (isInDatabase) {
-                console.log('already there, updating', member.thp_id)
-                update(member);
+                console.log('already there, updating', person.id)
+                // TODO: check this
+                // newOfficePerson.updateBasicInfo();
               } else {
-                member.displayName = member.openStatesDisplayName;
-                console.log('creating new', member.displayName)
-                createNew(member);
+                newOfficePerson.unpackOpenStatesLawmaker(person);
+                newOfficePerson.createRoleFromOpenStates(person);
+                console.log('creating new', newOfficePerson.displayName)
+                newOfficePerson.createNewStateLawMaker(person)
               }
+            }).catch(err => {
+              console.log('error unpacking', err)
             })
         })
       })

@@ -1,6 +1,7 @@
 const firebasedb = require('../lib/setupFirebase.js');
 var statesAb = require('../data/stateMap.js');
 const zeropadding = require('../lib/zeropadding');
+const Office = './office';
 
 class Moc {
     constructor(opts, id) {
@@ -23,42 +24,30 @@ class Moc {
         } else if (opts.current_party) {
             this.party = 'Independent';
         }
-        if (opts.state) {
-            this.state = opts.state;
-            this.stateName = statesAb[opts.state];
-        } else if (opts.roles[0].state) {
-            let data = opts.roles[0];
-            this.state = data.state;
-            this.stateName = statesAb[this.state];
-            if (data.chamber === 'House') {
-                this.chamber = 'lower';
-                this.district = data.district;
-            }
-            if (data.chamber === 'Senate') {
-                this.chamber = 'upper';
-            }
-        }
         delete this.facebook_account;
     }
 
     createNew(newPropublicaMember) {
         let updates = firebasedb.firestore.batch();
-        this.displayName = this.first_name + ' ' + this.last_name;
-        this.state = newPropublicaMember.roles[0].state;
-        this.end_date = newPropublicaMember.roles[0].end_date;
+        newPropublicaMember.displayName = this.first_name + ' ' + this.last_name;
+        newPropublicaMember.end_date = newPropublicaMember.roles[0].end_date;
+        newPropublicaMember.current_office_index = 0; //TODO: decide if we want these to be uids
+        const govtrack_id = this.govtrack_id || newPropublicaMember.govtrack_id;
 
-        this.district = newPropublicaMember.roles[0].district || null;
-        this.stateName = statesAb[this.state];
-        const lastname = this.last_name.replace(/\W/g, '');
-        const firstname = this.first_name.replace(/\W/g, '');
-        const memberKey = lastname.toLowerCase() + '_' + firstname.toLowerCase();
-        const govtrack_id = this.govtrack_id || newPropublicaMember.govtrack_id
         const memberIDObject = {
             id: this.propublica_id,
             govtrack_id: govtrack_id,
             display_name: this.displayName,
             in_office: true,
         };
+
+        const chamberMapping = {
+            House: 'lower',
+            Senate: 'upper',
+        }
+
+        newPropublicaMember.roles = newPropublicaMember.roles.map(role =>
+            new Office(this.propublica_id, role.state, chamberMapping[role.chamber], 'federal', 'won', role))
 
         // Set the data object
         var personDataRef = firebasedb.firestore.collection('office_people').doc(this.propublica_id);

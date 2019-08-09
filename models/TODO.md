@@ -7,10 +7,11 @@ with the cleanup of `Moc` / ProPublica rewrite.
 3. Figure out a method to map up current `OfficePerson` details with the details stored in the database `office_people`
 collection. If the `OfficePerson` is already stored, we simply want to update the current info or add the new `Role`
 information.
-4. It would probably be good to have a function that is simply `getStateAbbreviation` given the state name or the
+
+DONE: 4. It would probably be good to have a function that is simply `getStateAbbreviation` given the state name or the
 inverse, `getStateName` given the state abbreviation so that the individual data modals can pull it in instead of
 continually passing down information from `OfficePerson` -> `Role` -> `Committee`.
-5. `Role` should be changed to `Office` so that it can be reused for `Campaign`.
+DONE: 5. `Role` should be changed to `Office` so that it can be reused for `Campaign`.
 ```
 person:
     roles: Office[]
