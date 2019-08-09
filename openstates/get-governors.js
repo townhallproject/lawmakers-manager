@@ -2,7 +2,7 @@ require('dotenv').load();
 
 const superagent = require('superagent');
 const firebase = require('../lib/setupFirebase.js');
-const getStates = require('../lib/get-states');
+const getStates = require('../lib/get-included-state-legs');
 
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 const GoogleCivicsAPIKey = process.env.GOOGLE_CIVICS_API_KEY;
