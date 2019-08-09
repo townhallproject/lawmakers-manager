@@ -13,7 +13,7 @@
     "update-retiring": "node bin/update-retiring",
     "pull": "node bin/update-from-propublica",
     "get-state-lawmakers": "node openstates/get-state-lawmakers.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest -i --coverage --forceExit",
     "start": "node index.js"
   },
   "repository": {
@@ -34,6 +34,7 @@
     "superagent": "^3.8.3"
   },
   "devDependencies": {
-    "dotenv": "^6.0.0"
+    "dotenv": "^6.0.0",
+    "jest": "^24.8.0"
   }
 }
