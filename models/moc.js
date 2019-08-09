@@ -39,7 +39,6 @@ class Moc {
             }
         }
         delete this.facebook_account;
-        delete this.current_party;
     }
 
     createNew(newPropublicaMember) {
@@ -67,11 +66,14 @@ class Moc {
 
         // Add to the lookup table
         const collection = this.chamber === 'upper' ? 'senators': 'house_reps';
+        const congressCollection = '116th_congress'
         var collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
+        var congressCollectionRef = firebasedb.firestore.collection(congressCollection).doc(this.propublica_id);
         updates.set(collectionRef, memberIDObject);
+        updates.set(congressCollectionRef, memberIDObject);
 
         return updates.commit().then(function () {
-            console.log('successfully added', memberIDObject.displayName)
+            console.log('successfully added', memberIDObject.display_name)
         }).catch(console.log)
     }
 
