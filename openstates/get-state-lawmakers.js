@@ -133,12 +133,26 @@ function transformOpenStatesLegislatorsData(receivedData) {
 };
 
 const checkIsInDb = (openStatesMember) => {
-  const path = 'state_legislators_data';
-  const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-  return firebase.realtimedb.ref(ref).once('value')
-    .then((snapshot) => {
-      return snapshot.exists();
-    })
+    const path = 'state_legislators_data';
+    const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
+    let stateLegRef = firebase.firestore.collection(`${openStatesMember.state}_state_legislature`)
+    console.log(`storing next stage lawmaker in collection: ${openStatesMember.state}`);
+    let queryRef = stateLegRef.where('id', '==', openStatesMember.thp_id)
+    // return queryRef.once('value')
+    // .then((snapshot) => {
+    //   return snapshot.exists();
+    // })
+    queryRef.get().then(function (querySnapshot) {
+        if (querySnapshot.empty) {
+            console.log('creating new', openStatesMember.thp_id)
+            // return newMember.createNew(fullProPublicaMember).then(Moc.makeNewEndpoints)
+        }
+        // return newMember.update(collection)
+        }).catch(function(error){
+            console.log(error)
+          let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
+        //   errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
+        })
 }
 
 const getMemberKey = (name) => {
@@ -211,4 +225,3 @@ async function getStateLegs() {
 }
 
 getStateLegs();
-
