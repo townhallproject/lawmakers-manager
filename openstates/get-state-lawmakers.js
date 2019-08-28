@@ -1,8 +1,9 @@
 require('dotenv').load();
 
 const superagent = require('superagent');
-const firebase = require('../lib/setupFirebase.js');
+const firebase = require('../lib/setupFirebase');
 const getStates = require('../lib/get-included-state-legs');
+const checkIsInDb = require('../lib/check-is-in-db');
 const StateLawmaker = require('../models/state-lawmaker');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 
@@ -124,22 +125,6 @@ function transformOpenStatesLegislatorsData(receivedData) {
     return legislators;
 };
 
-// TODO: check if for other matches. 
-// if we've manually entered a person, want to have that return here too. 
-
-const checkIsInDb = (openStatesMember) => {
-    let stateLegRef = firebase.firestore.collection(`${openStatesMember.state}_state_legislature`)
-    let queryRef = stateLegRef.where('id', '==', openStatesMember.id)
-
-    return queryRef.get().then(function (querySnapshot) {
-        return !querySnapshot.empty;
-        }).catch(function(error){
-            console.log(error)
-          let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
-        //   errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
-        })
-}
-
 async function getStateLegs() {
   stateCodes = await getStates().catch((err) => {
     console.log('err getting state legs list', err);
@@ -160,7 +145,7 @@ async function getStateLegs() {
           const newOfficePerson = new StateLawmaker(memberId, person.state, true)
           person.id = memberId;
 
-          checkIsInDb(person)
+          checkIsInDb.checkOpenStatesMemberInDb(person)
             .then((isInDatabase) => {
               if (isInDatabase) {
                 console.log('already there, updating', person.id)
