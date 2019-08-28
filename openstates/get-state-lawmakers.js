@@ -142,12 +142,11 @@ async function getStateLegs() {
       .then((lawmakers) => {
         Object.keys(lawmakers).forEach(memberId => {
           const person = lawmakers[memberId]
-          const newOfficePerson = new StateLawmaker(memberId, person.state, true)
-          person.id = memberId;
+          const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state)
 
-          checkIsInDb.checkOpenStatesMemberInDb(person)
-            .then((isInDatabase) => {
-              if (isInDatabase) {
+          newOfficePerson.checkDatabaseShortInfo()
+            .then((checkResult) => {
+              if (checkResult) {
                 console.log('already there, updating', person.id)
                 // TODO: check this
                 // newOfficePerson.updateBasicInfo();
