@@ -144,25 +144,68 @@ async function getStateLegs() {
           const person = lawmakers[memberId]
           const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state)
 
+          // Unpack open states data
+          newOfficePerson.unpackOpenStatesLawmaker(person);
+
+          // Handle person unpacking and storage based off if member already exists in database
           newOfficePerson.checkDatabaseShortInfo()
             .then((checkResult) => {
+              // If an object was returned, we either need to do to nothing, or update the existing data
               if (checkResult) {
-                console.log('already there, updating', person.id)
-                // TODO: check this
-                // newOfficePerson.updateBasicInfo();
+                // Check the id of the person found matches the open states id
+                if (newOfficePerson.id == checkResult.id) {
+                    // Great, don't do anything, this data is already correct
+                    console.log(`office person: ${newOfficePerson.id} already exists`);
+                } else {
+                    // This member was added to the database prior to open states adding them
+                    // Get their full data, merge the already stored data with the open states data, and then update
+                    // the database with their official id and propagate changes back to the state legislature lookup
+                    console.log(`office person found by name; oldId: ${checkResult.id}, newId: ${newOfficePerson.id}`);
+
+                    // Get full office person data
+                    let existingOfficePersonRef = firebase.firestore.collection('office_people').doc(checkResult.id);
+                    let existingData = existingOfficePersonRef.get().then(doc => {
+                        // Catch really weird case where the persons state lookup exists but
+                        // but their office person record doesn't
+                        if (!doc.exists) {
+                            console.log(
+                                `found state legislator by name: ${newOfficePerson.displayName},
+                                but failed to find their 'office_people' record`
+                            );
+                        } else {
+                            // Found their office person record
+                            // Get and merge the existing data with the new open states data
+                            console.log(`office person found by name: ${newOfficePerson.displayName}, updating data`);
+
+                            // Handle merge
+                            newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
+
+                            // Create entirely new office person
+                            // This also updates the state legislator lookup table
+                            newOfficePerson.createNewStateLawMaker();
+
+                            // Delete old office person document
+                            firebase.firestore.collection('office_person').doc(checkResult.id).delete();
+                        };
+                    }).catch(err => {
+                        console.log('err getting document from firestore', err);
+                    });
+                };
               } else {
-                newOfficePerson.unpackOpenStatesLawmaker(person);
+                // The checkResult value must have been `false`
+                // In this case, make an entirely new member
+                console.log(`creating new member: ${newOfficePerson.id}`);
                 newOfficePerson.createRoleFromOpenStates(person);
-                console.log('creating new', newOfficePerson.displayName)
-                newOfficePerson.createNewStateLawMaker(person)
-              }
+                newOfficePerson.createNewStateLawMaker();
+            };
             }).catch(err => {
-              console.log('error unpacking', err)
-            })
-        })
-      })
-      .catch((error) => console.error('error getting lawmakers from openstates', error));
+              console.log(
+                `error unpacking data; name: ${newOfficePerson.displayName}, id: ${newOfficePerson.id}, error: ${err}`)
+            });
+        });
+    });
+    .catch((error) => console.error('error getting lawmakers from openstates', error));
   });
-}
+};
 
 getStateLegs();

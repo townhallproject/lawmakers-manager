@@ -26,7 +26,7 @@ class StateLawmaker {
 
             // We haven't returned yet indicating the document did not exist
             // Query by displayName
-            let queryRef = stateLegRef.where('display_name', '==', this.displayName)
+            let queryRef = stateLegRef.where('displayName', '==', this.displayName)
             return queryRef.get().then(function (querySnapshot) {
                 // If query was not empty, return the first of found documents
                 if (!querySnapshot.empty) {
@@ -65,16 +65,33 @@ class StateLawmaker {
     unpackOpenStatesLawmaker(person) {
         // These are easy to unpack
         this.openStatesDisplayName = person.openStatesDisplayName;
-        this.in_office = true;
-
     };
 
-    checkIfRoleExists() {
+    checkIfCurrentRolesMatch(person) {
+        if (this.roles) {
+            return this.roles[this.current_office_index] == person.roles[person.current_office_index];
+        };
 
-    }
+        return false;
+    };
+
+    mergeExistingOpenStatesData(existingData, openStatesData) {
+        // Handle basic merge
+        // We can't just use an object merge / expansion here because role information may get messy and the
+        // id for the office person would get overwritten
+        this.displayName = existingData.displayName;
+        this.in_office = existingData.in_office;
+        this.state = existingData.state;
+
+        // Handle role update or not
+        if (!StateLawmaker.checkIfCurrentRolesMatch(existingData)) {
+            // Current role does not match, add the open states role to the array of already stored roles
+            this.roles.push(new Office(this.id, this.state, openStatesData.chamber, 'state', 'won', openStatesData));
+        };
+    };
 
     createRoleFromOpenStates(data) {
-        const role = new Office(this.thp_id, this.state, data.chamber, 'state', 'won', data);
+        const role = new Office(this.id, this.state, data.chamber, 'state', 'won', data);
         this.current_office_index = 0;
         this.roles = [role];
     };
@@ -89,25 +106,25 @@ class StateLawmaker {
 
     };
 
-    createNewStateLawMaker(openStatesMember){
+    createNewStateLawMaker(){
         let updates = firebase.firestore.batch();
 
         const memberIDObject = {
             id: this.id,
-            display_name: this.displayName,
-            in_office: true,
+            displayName: this.displayName,
+            in_office: this.in_office
         };
 
         const personDataRef = firebase.firestore.collection('office_people').doc(this.id);
         updates.set(personDataRef, JSON.parse(JSON.stringify(this)));
-        const collection = `${openStatesMember.state}_state_legislature`;
+        const collection = `${this.state}_state_legislature`;
         const collectionRef = firebase.firestore.collection(collection).doc(this.id);
         updates.set(collectionRef, memberIDObject);
-        console.log(this, memberIDObject)
+        console.log(this, memberIDObject);
         return updates.commit().then(function () {
             console.log('successfully added')
-        }).catch(console.log)
-    }
+        }).catch(console.log);
+    };
 };
 
 module.exports = StateLawmaker;
