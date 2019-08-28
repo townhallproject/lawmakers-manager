@@ -11,7 +11,7 @@
   },
   "scripts": {
     "update-retiring": "node bin/update-retiring",
-    "pull": "node bin/update-from-propublica",
+    "pull": "node bin/update-firestore-from-propublica",
     "get-state-lawmakers": "node openstates/get-state-lawmakers.js",
     "test": "jest -i --coverage --forceExit",
     "start": "node index.js"
@@ -28,7 +28,7 @@
   "homepage": "https://github.com/townhallproject/lawmakers-manager#readme",
   "dependencies": {
     "express": "^4.16.3",
-    "firebase-admin": "^5.13.1",
+    "firebase-admin": "^6.5.1",
     "mailgun-js": "^0.20.0",
     "moment": "^2.24.0",
     "superagent": "^3.8.3"

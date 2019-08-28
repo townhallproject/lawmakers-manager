@@ -5,13 +5,26 @@ const ErrorReport = require('../lib/errorReporting.js');
 const Moc = require('../models/moc');
 
 const propublicaAPI = process.env.PROPUBLICA;
-const newUrl = 'https://api.propublica.org/congress/v1/members/new.json';
 const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
 const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
 
-function getNewMembers() {
+function getHouse() {
     return request
-        .get(newUrl)
+        .get(wholeHouse)
+        .set('X-API-Key', propublicaAPI)
+        .then((res) => {
+            try {
+                let data = JSON.parse(res.text);
+                return data.results[0].members;
+            } catch (e) {
+                console.log(e);
+            }
+        });
+}
+
+function getSenate() {
+    return request
+        .get(wholeSenate)
         .set('X-API-Key', propublicaAPI)
         .then((res) => {
             try {
@@ -69,10 +82,11 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 }
 
 // call propublica 'new members' api endpoint
-getNewMembers()
+Promise.all([getHouse(), getSenate()])
     .then(function (newMembers) {
-        console.log('got all new members', newMembers);
-        updateDatabaseWithNewMembers(newMembers);
+        const allMembers = newMembers[0].concat(newMembers[1]);
+        console.log('got all new members');
+        updateDatabaseWithNewMembers([...newMembers[0], ...newMembers[1]]);
     })
     .catch(function (error) {
         console.log('Uh oh, something went wrong getting new members ', error.message);

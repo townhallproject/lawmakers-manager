@@ -76,7 +76,7 @@ const createNew = (openStatesMember) => {
   const memberKey = getMemberKey(openStatesMember.displayName);
   const memberIDObject = {
     id: openStatesMember.thp_id,
-    nameEntered: openStatesMember.displayName,
+    display_name: openStatesMember.displayName,
   };
   const dataPath = 'state_legislators_data';
   const idPath = 'state_legislators_id';

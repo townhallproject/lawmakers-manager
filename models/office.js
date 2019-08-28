@@ -1,5 +1,6 @@
 const Committee = require('./committee');
 const getStateNameFromAbr = require('../lib/get-state-abr-and-name').getStateNameFromAbr;
+
 class Office {
     constructor(id, state, chamber, level, status, opts) {
         this.id = id;
@@ -8,6 +9,7 @@ class Office {
         this.chamber = chamber;
         this.level = level;
         this.status = status; // won, lost, primary, general
+        this.thp_key = opts.thp_key || null;
         // optional fields (from propublica)
         this.congress = opts.congress || null;
         this.title = opts.title || null;

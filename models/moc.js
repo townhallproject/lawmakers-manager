@@ -1,7 +1,6 @@
 const firebasedb = require('../lib/setupFirebase.js');
 var statesAb = require('../data/stateMap.js');
-const zeropadding = require('../lib/zeropadding');
-const Office = './office';
+const Office = require('./office');
 
 class Moc {
     constructor(opts, id) {
@@ -29,6 +28,7 @@ class Moc {
 
     createNew(newPropublicaMember) {
         let updates = firebasedb.firestore.batch();
+   
         newPropublicaMember.displayName = this.first_name + ' ' + this.last_name;
         newPropublicaMember.end_date = newPropublicaMember.roles[0].end_date;
         newPropublicaMember.current_office_index = 0; //TODO: decide if we want these to be uids
@@ -36,8 +36,8 @@ class Moc {
 
         const memberIDObject = {
             id: this.propublica_id,
-            govtrack_id: govtrack_id,
-            display_name: this.displayName,
+            govtrack_id: govtrack_id || null,
+            display_name: this.displayName || newPropublicaMember.displayName,
             in_office: true,
         };
 
@@ -45,13 +45,17 @@ class Moc {
             House: 'lower',
             Senate: 'upper',
         }
-
-        newPropublicaMember.roles = newPropublicaMember.roles.map(role =>
-            new Office(this.propublica_id, role.state, chamberMapping[role.chamber], 'federal', 'won', role))
-
+        const moc = {
+            ...this,
+            ...newPropublicaMember,
+        }
+        newPropublicaMember.roles = newPropublicaMember.roles.map(role => {
+            return {...new Office(this.propublica_id, role.state, chamberMapping[role.chamber], 'federal', 'won', role)}
+        })
+        console.log(moc.party)
         // Set the data object
         var personDataRef = firebasedb.firestore.collection('office_people').doc(this.propublica_id);
-        updates.set(personDataRef, newPropublicaMember);
+        updates.set(personDataRef, moc);
 
         // Add to the lookup table
         const collection = this.chamber === 'upper' ? 'senators': 'house_reps';
@@ -62,7 +66,7 @@ class Moc {
         updates.set(congressCollectionRef, memberIDObject);
 
         return updates.commit().then(function () {
-            console.log('successfully added', memberIDObject.display_name)
+            console.log('successfully added', newPropublicaMember.displayName)
         }).catch(console.log)
     }
 

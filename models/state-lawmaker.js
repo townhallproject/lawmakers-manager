@@ -10,7 +10,7 @@ class StateLawmaker {
 
     unpackOpenStatesLawmaker(person) {
         // These are easy to unpack
-        this.displayName = person.openStatesDisplayName;
+        this.displayName = person.displayName || person.openStatesDisplayName;
         this.openStatesDisplayName = person.openStatesDisplayName;
         this.in_office = true;
  
@@ -44,16 +44,15 @@ class StateLawmaker {
             display_name: this.displayName,
             in_office: true,
         };
-        console.log(typeof this)
 
         const personDataRef = firebasedb.firestore.collection('office_people').doc(this.id);
-        updates.set(personDataRef, JSON.parse( JSON.stringify(this)));
+        updates.set(personDataRef, JSON.parse(JSON.stringify(this)));
         const collection = `${openStatesMember.state}_state_legislature`;
         const collectionRef = firebasedb.firestore.collection(collection).doc(this.id);
         updates.set(collectionRef, memberIDObject);
-
+        console.log(this, memberIDObject)
         return updates.commit().then(function () {
-            console.log('successfully added', this.displayName)
+            console.log('successfully added')
         }).catch(console.log)
     }
 };

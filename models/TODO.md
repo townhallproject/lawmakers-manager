@@ -2,8 +2,10 @@
 
 1. Do a bit of cleanup and merge `Moc` and `StateLawmaker` objects into single `OfficePerson` object that has multiple
 `unpackFrom{x}` functions, where `x` is the database the object data was retrieved from.
+
 2. Finish the other models, `Role` and `Committee`. `Committee` look's really empty right now but can easily be added to
 with the cleanup of `Moc` / ProPublica rewrite.
+
 3. Figure out a method to map up current `OfficePerson` details with the details stored in the database `office_people`
 collection. If the `OfficePerson` is already stored, we simply want to update the current info or add the new `Role`
 information.
