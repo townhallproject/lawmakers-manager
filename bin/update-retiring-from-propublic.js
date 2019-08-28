@@ -34,8 +34,8 @@ function getRetiringMembers() {
         .then(allRetiringMembers => {
             console.log(allRetiringMembers)
             allRetiringMembers.map(propublicaId => {
-                let houseRef = firebasedb.collection('house_reps').doc(propublicaId);
-                let senateRef = firebasedb.collection('senators').doc(propublicaId);
+                let houseRef = firebasedb.firestore.collection('house_reps').doc(propublicaId);
+                let senateRef = firebasedb.firestore.collection('senators').doc(propublicaId);
                 houseRef.get().then(function (querySnapshot) {
                     if (querySnapshot.data()) {
                         houseRef.update({in_office : false})
@@ -50,7 +50,7 @@ function getRetiringMembers() {
             }).forEach(propublicaId => {
                 console.log('retiring', propublicaId)
 
-                let personRef = firebasedb.collection('office_people').doc(propublicaId);
+                let personRef = firebasedb.firestore.collection('office_people').doc(propublicaId);
                 personRef.get().then((snapshot) => {
                     if (snapshot.data()) {
                         personRef.update({in_office: false})
@@ -59,4 +59,3 @@ function getRetiringMembers() {
             })
         })
         .catch(console.log)
-
