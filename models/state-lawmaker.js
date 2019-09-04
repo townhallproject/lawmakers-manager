@@ -1,5 +1,6 @@
-const firebase = require('../lib/setupFirebase.js');
+const firebase = require('../lib/setupFirebase');
 const Office = require('./office');
+const ErrorReport = require('../lib/errorReporting');
 const getStateNameFromAbr = require('../lib/get-state-abr-and-name').getStateNameFromAbr;
 
 class StateLawmaker {
@@ -17,7 +18,7 @@ class StateLawmaker {
         // to update existing data or create entirely new data
         let stateLegRef = firebase.firestore.collection(`${this.state}_state_legislature`)
         let queryRef = stateLegRef.doc(this.id)
-
+        let thisLawmaker = this;
         return queryRef.get().then(function (querySnapshot) {
             // If document exists, simply return the data
             if (querySnapshot.exists) {
@@ -26,7 +27,7 @@ class StateLawmaker {
 
             // We haven't returned yet indicating the document did not exist
             // Query by displayName
-            let queryRef = stateLegRef.where('displayName', '==', this.displayName)
+            let queryRef = stateLegRef.where('displayName', '==', thisLawmaker.displayName);
             return queryRef.get().then(function (querySnapshot) {
                 // If query was not empty, return the first of found documents
                 if (!querySnapshot.empty) {
@@ -40,7 +41,7 @@ class StateLawmaker {
 
                     // Catch-all / multiple members with same name error
                     return Promise.reject(
-                        `Multiple members found with same name: ${this.displayName}`
+                        `Multiple members found with same name: ${thisLawmaker.displayName}`
                     );
                 }
 
@@ -49,14 +50,14 @@ class StateLawmaker {
             }).catch(function(error) {
                 console.log(error);
                 let errorEmail = new ErrorReport(
-                    `${this.displayName}; id: ${this.id}, error: ${error}`, 'Could not find open states member'
+                    `${thisLawmaker.displayName}; id: ${thisLawmaker.id}, error: ${error}`, 'Could not find open states member'
                 );
                 // errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
             });
         }).catch(function(error) {
             console.log(error);
             let errorEmail = new ErrorReport(
-                `${this.displayName}; id: ${this.id}, error: ${error}`, 'Could not find open states member'
+                `${thisLawmaker.displayName}; id: ${thisLawmer.id}, error: ${error}`, 'Could not find open states member'
             );
             // errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
         });
@@ -79,12 +80,18 @@ class StateLawmaker {
         // Handle basic merge
         // We can't just use an object merge / expansion here because role information may get messy and the
         // id for the office person would get overwritten
-        this.displayName = existingData.displayName;
-        this.in_office = existingData.in_office;
-        this.state = existingData.state;
+        this.displayName = existingData.displayName || this.displayName;
+        this.in_office = existingData.in_office || true;
+        this.state = existingData.state || this.state;
+        this.roles = existingData.roles || this.roles;
 
         // Handle role update or not
-        if (!StateLawmaker.checkIfCurrentRolesMatch(existingData)) {
+        if (!this.checkIfCurrentRolesMatch(existingData)) {
+            // Safety check to ensure that roles is defined
+            if (!this.roles) {
+                this.roles = [];
+            };
+
             // Current role does not match, add the open states role to the array of already stored roles
             this.roles.push(new Office(this.id, this.state, openStatesData.chamber, 'state', 'won', openStatesData));
         };
@@ -97,7 +104,6 @@ class StateLawmaker {
     };
 
     updateBasicInfo(collection) {
-        console.log(this);
         const ref = firebase.firestore.collection('office_people').doc(this.id);
         ref.update(this);
     };

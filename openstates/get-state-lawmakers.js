@@ -3,7 +3,6 @@ require('dotenv').load();
 const superagent = require('superagent');
 const firebase = require('../lib/setupFirebase');
 const getStates = require('../lib/get-included-state-legs');
-const checkIsInDb = require('../lib/check-is-in-db');
 const StateLawmaker = require('../models/state-lawmaker');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 
@@ -173,10 +172,6 @@ async function getStateLegs() {
                                 but failed to find their 'office_people' record`
                             );
                         } else {
-                            // Found their office person record
-                            // Get and merge the existing data with the new open states data
-                            console.log(`office person found by name: ${newOfficePerson.displayName}, updating data`);
-
                             // Handle merge
                             newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
 
@@ -184,8 +179,13 @@ async function getStateLegs() {
                             // This also updates the state legislator lookup table
                             newOfficePerson.createNewStateLawMaker();
 
-                            // Delete old office person document
-                            firebase.firestore.collection('office_person').doc(checkResult.id).delete();
+                            // Delete old office people document
+                            firebase.firestore.collection('office_people').doc(checkResult.id).delete();
+
+                            // Delete state legislator doc
+                            firebase.firestore.collection(`${newOfficePerson.state}_state_legislature`)
+                                .doc(checkResult.id)
+                                .delete();
                         };
                     }).catch(err => {
                         console.log('err getting document from firestore', err);
@@ -203,7 +203,7 @@ async function getStateLegs() {
                 `error unpacking data; name: ${newOfficePerson.displayName}, id: ${newOfficePerson.id}, error: ${err}`)
             });
         });
-    });
+    })
     .catch((error) => console.error('error getting lawmakers from openstates', error));
   });
 };
