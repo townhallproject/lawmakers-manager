@@ -1,0 +1,249 @@
+{
+  "AK" : {
+    "state" : "AK",
+    "stateName" : "Alaska"
+  },
+  "AL" : {
+    "state" : "AL",
+    "stateName" : "Alabama"
+  },
+  "AR" : {
+    "state" : "AR",
+    "stateName" : "Arkansas"
+  },
+  "AS" : {
+    "state" : "AS",
+    "stateName" : "American Samoa"
+  },
+  "AZ" : {
+    "state" : "AZ",
+    "stateName" : "Arizona",
+    "state_legislature_covered" : true
+  },
+  "CA" : {
+    "state" : "CA",
+    "stateName" : "California"
+  },
+  "CO" : {
+    "state" : "CO",
+    "stateName" : "Colorado",
+    "state_legislature_covered" : true
+  },
+  "CT" : {
+    "state" : "CT",
+    "stateName" : "Connecticut"
+  },
+  "DC" : {
+    "state" : "DC",
+    "stateName" : "District Of Columbia"
+  },
+  "DE" : {
+    "state" : "DE",
+    "stateName" : "Delaware"
+  },
+  "FL" : {
+    "state" : "FL",
+    "stateName" : "Florida",
+    "state_legislature_covered" : true
+  },
+  "FM" : {
+    "state" : "FM",
+    "stateName" : "Federated States Of Micronesia"
+  },
+  "GA" : {
+    "state" : "GA",
+    "stateName" : "Georgia"
+  },
+  "GU" : {
+    "state" : "GU",
+    "stateName" : "Guam"
+  },
+  "HI" : {
+    "state" : "HI",
+    "stateName" : "Hawaii"
+  },
+  "IA" : {
+    "state" : "IA",
+    "stateName" : "Iowa"
+  },
+  "ID" : {
+    "state" : "ID",
+    "stateName" : "Idaho"
+  },
+  "IL" : {
+    "state" : "IL",
+    "stateName" : "Illinois"
+  },
+  "IN" : {
+    "state" : "IN",
+    "stateName" : "Indiana"
+  },
+  "KS" : {
+    "state" : "KS",
+    "stateName" : "Kansas"
+  },
+  "KY" : {
+    "state" : "KY",
+    "stateName" : "Kentucky"
+  },
+  "LA" : {
+    "state" : "LA",
+    "stateName" : "Louisiana"
+  },
+  "MA" : {
+    "state" : "MA",
+    "stateName" : "Massachusetts"
+  },
+  "MD" : {
+    "state" : "MD",
+    "stateName" : "Maryland",
+    "state_legislature_covered" : true
+  },
+  "ME" : {
+    "state" : "ME",
+    "stateName" : "Maine",
+    "state_legislature_covered" : true
+  },
+  "MH" : {
+    "state" : "MH",
+    "stateName" : "Marshall Islands"
+  },
+  "MI" : {
+    "state" : "MI",
+    "stateName" : "Michigan",
+    "state_legislature_covered" : true
+  },
+  "MN" : {
+    "state" : "MN",
+    "stateName" : "Minnesota"
+  },
+  "MO" : {
+    "state" : "MO",
+    "stateName" : "Missouri"
+  },
+  "MP" : {
+    "state" : "MP",
+    "stateName" : "Northern Mariana Islands"
+  },
+  "MS" : {
+    "state" : "MS",
+    "stateName" : "Mississippi"
+  },
+  "MT" : {
+    "state" : "MT",
+    "stateName" : "Montana"
+  },
+  "NC" : {
+    "state" : "NC",
+    "stateName" : "North Carolina",
+    "state_legislature_covered" : true
+  },
+  "ND" : {
+    "state" : "ND",
+    "stateName" : "North Dakota"
+  },
+  "NE" : {
+    "state" : "NE",
+    "stateName" : "Nebraska"
+  },
+  "NH" : {
+    "state" : "NH",
+    "stateName" : "New Hampshire"
+  },
+  "NJ" : {
+    "state" : "NJ",
+    "stateName" : "New Jersey"
+  },
+  "NM" : {
+    "state" : "NM",
+    "stateName" : "New Mexico"
+  },
+  "NV" : {
+    "state" : "NV",
+    "stateName" : "Nevada",
+    "state_legislature_covered" : true
+  },
+  "NY" : {
+    "state" : "NY",
+    "stateName" : "New York"
+  },
+  "OH" : {
+    "state" : "OH",
+    "stateName" : "Ohio"
+  },
+  "OK" : {
+    "state" : "OK",
+    "stateName" : "Oklahoma"
+  },
+  "OR" : {
+    "state" : "OR",
+    "stateName" : "Oregon",
+    "state_legislature_covered" : true
+  },
+  "PA" : {
+    "state" : "PA",
+    "stateName" : "Pennsylvania",
+    "state_legislature_covered" : true
+  },
+  "PR" : {
+    "state" : "PR",
+    "stateName" : "Puerto Rico"
+  },
+  "PW" : {
+    "state" : "PW",
+    "stateName" : "Palau"
+  },
+  "RI" : {
+    "state" : "RI",
+    "stateName" : "Rhode Island"
+  },
+  "SC" : {
+    "state" : "SC",
+    "stateName" : "South Carolina"
+  },
+  "SD" : {
+    "state" : "SD",
+    "stateName" : "South Dakota"
+  },
+  "TN" : {
+    "state" : "TN",
+    "stateName" : "Tennessee"
+  },
+  "TX" : {
+    "state" : "TX",
+    "stateName" : "Texas"
+  },
+  "UT" : {
+    "state" : "UT",
+    "stateName" : "Utah"
+  },
+  "VA" : {
+    "state" : "VA",
+    "stateName" : "Virginia",
+    "state_legislature_covered" : true
+  },
+  "VI" : {
+    "state" : "VI",
+    "stateName" : "Virgin Islands"
+  },
+  "VT" : {
+    "state" : "VT",
+    "stateName" : "Vermont"
+  },
+  "WA" : {
+    "state" : "WA",
+    "stateName" : "Washington"
+  },
+  "WI" : {
+    "state" : "WI",
+    "stateName" : "Wisconsin"
+  },
+  "WV" : {
+    "state" : "WV",
+    "stateName" : "West Virginia"
+  },
+  "WY" : {
+    "state" : "WY",
+    "stateName" : "Wyoming"
+  }
+}
