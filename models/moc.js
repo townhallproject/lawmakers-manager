@@ -46,7 +46,7 @@ class Moc {
         this.end_date = this.roles[0].end_date;
         this.current_office_index = 0; //TODO: decide if we want these to be uids
         const govtrack_id = this.govtrack_id;
-        
+
         this.mapRoles();
 
         const memberIDObject = createMemberMetaDataObject({
@@ -65,7 +65,7 @@ class Moc {
         const collection = this.chamber === 'upper' ? 'senators': 'house_reps';
         const collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
         updates.set(collectionRef, memberIDObject);
-        
+
         const congressCollection = '116th_congress'
         const congressCollectionRef = firebasedb.firestore.collection(congressCollection).doc(this.propublica_id);
         updates.set(congressCollectionRef, memberIDObject);
@@ -73,13 +73,18 @@ class Moc {
         return updates.commit().then(function () {
             console.log('successfully added', moc.displayName)
         }).catch(console.log)
-    }
+    };
 
-    update(collection) {
-        console.log(this)
+    update() {
+        // Ensure that the end date and current office index are both updated
+        this.end_date = this.roles[0].end_date;
+        this.current_office_index = 0; //TODO: decide if we want these to be uids
+
+        // Run update
         const ref = firebasedb.firestore.collection('office_people').doc(this.id);
         ref.update(this);
-    }
+        console.log(`Updating member: ${this.displayName}, ${this.id}`);
+    };
 
     // updateMocByStateDistrict(){
     //     let moc = this;

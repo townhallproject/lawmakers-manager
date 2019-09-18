@@ -53,7 +53,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                         console.log('creating new', fullProPublicaMember.govtrack_id)
                         return newMember.createNew()
                     }
-                    return newMember.createNew(fullProPublicaMember)
+                    return newMember.update()
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
