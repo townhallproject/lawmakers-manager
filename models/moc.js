@@ -77,13 +77,14 @@ class Moc {
 
     update() {
         // Ensure that the end date and current office index are both updated
+        this.mapRoles();
         this.end_date = this.roles[0].end_date;
         this.current_office_index = 0; //TODO: decide if we want these to be uids
 
         // Run update
         const ref = firebasedb.firestore.collection('office_people').doc(this.id);
         ref.update(this);
-        console.log(`Updating member: ${this.displayName}, ${this.id}`);
+        console.log(`Updated member: ${this.id}`);
     };
 
     // updateMocByStateDistrict(){
