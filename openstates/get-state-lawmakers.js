@@ -1,7 +1,6 @@
 require('dotenv').load();
 
 const superagent = require('superagent');
-const firebase = require('../lib/setupFirebase');
 const getStates = require('../lib/get-included-state-legs');
 const StateLawmaker = require('../models/state-lawmaker');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
