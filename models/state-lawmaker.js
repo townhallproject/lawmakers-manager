@@ -11,12 +11,12 @@ class StateLawmaker {
         this.in_office = in_office || true;
     };
 
-    checkDatabaseShortInfo() {
+    checkDatabaseShortInfo(mockRef) {
         // Returns the object found in the case that the person was found
         // Returns false if no person was found
         // The object data is required rather than just `true` because we need to know whether
         // to update existing data or create entirely new data
-        let stateLegRef = firebase.firestore.collection(`${this.state}_state_legislature`)
+        let stateLegRef = mockRef || firebase.firestore.collection(`${this.state}_state_legislature`)
         let queryRef = stateLegRef.doc(this.id)
         let thisLawmaker = this;
         return queryRef.get().then(function (querySnapshot) {

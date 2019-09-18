@@ -51,7 +51,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {
                         console.log('creating new', fullPropPublicaMember.govtrack_id)
-                        return newMember.createNew(fullPropPublicaMember)
+                        return newMember.createNew()
                     }
                     return newMember.createNew(fullPropPublicaMember)
                     }).catch(function(error){
