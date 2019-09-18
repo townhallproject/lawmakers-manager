@@ -112,6 +112,25 @@ class StateLawmaker {
 
     };
 
+    checkForExistingStateLawmakerById(id) {
+        let existingRef = firebase.firestore.collection('office_people').doc(id);
+        let existingData = existingRef.get().then(doc => {
+            // Catch really weird case where the persons state lookup exists but
+            // but their office person record doesn't
+            if (!doc.exists) {
+                console.log(
+                    `found state legislator by name: ${this.displayName},
+                    but failed to find their 'office_people' record`
+                );
+                return undefined;
+            };
+
+            return doc.data();
+        }).catch(err => {
+            console.log('err getting document from firestore', err);
+        });
+    };
+
     createNewStateLawMaker(){
         let updates = firebase.firestore.batch();
 

@@ -164,18 +164,8 @@ async function getStateLegs() {
                 console.log(`office person found by name; oldId: ${checkResult.id}, newId: ${newOfficePerson.id}`);
 
                 // Get full office person data
-                let existingOfficePersonRef = firebase.firestore.collection('office_people').doc(checkResult.id);
-                let existingData = existingOfficePersonRef.get().then(doc => {
-                    // Catch really weird case where the persons state lookup exists but
-                    // but their office person record doesn't
-                    if (!doc.exists) {
-                        console.log(
-                            `found state legislator by name: ${newOfficePerson.displayName},
-                            but failed to find their 'office_people' record`
-                        );
-                        return newOfficePerson.displayName;
-                    };
-
+                let existingData = newOfficePerson.checkForExistingStateLawmakerById(checkResult.id);
+                if (existingData) {
                     // Handle merge
                     newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
 
@@ -192,9 +182,7 @@ async function getStateLegs() {
                         .delete();
 
                     return newOfficePerson.id
-                }).catch(err => {
-                    console.log('err getting document from firestore', err);
-                });
+                };
             };
 
             // The checkResult value must have been `false`
