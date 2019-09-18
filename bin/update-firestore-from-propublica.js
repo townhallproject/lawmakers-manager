@@ -42,18 +42,18 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
     newPropublicaMembers.forEach(function (new_propub_member) {
         // check against propublica specific member search using id
         getSpecificMember(new_propub_member.api_uri)
-            .then(function (fullPropPublicaMember) {
-                fullPropPublicaMember.chamber = new_propub_member.chamber === 'House' ? 'lower' : 'upper';
-                let newMember = new Moc(fullPropPublicaMember);
+            .then(function (fullProPublicaMember) {
+                fullProPublicaMember.chamber = new_propub_member.chamber === 'House' ? 'lower' : 'upper';
+                let newMember = new Moc(fullProPublicaMember);
                 let collection = newMember.chamber === 'lower' ? 'house_reps' : 'senators';
                 let officePeopleRef = firebasedb.firestore.collection(collection);
-                let queryRef = officePeopleRef.where('id', '==', fullPropPublicaMember.member_id);
+                let queryRef = officePeopleRef.where('id', '==', fullProPublicaMember.member_id);
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {
-                        console.log('creating new', fullPropPublicaMember.govtrack_id)
-                        return newMember.createNew(fullPropPublicaMember)
+                        console.log('creating new', fullProPublicaMember.govtrack_id)
+                        return newMember.createNew()
                     }
-                    return newMember.createNew(fullPropPublicaMember)
+                    return newMember.createNew(fullProPublicaMember)
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');

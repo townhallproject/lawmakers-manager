@@ -32,7 +32,6 @@ firebase.realtimedb.ref('candidate_keys').once('value')
                                     )
                                 const cleanCampaign = mapValues(campaign, (value, key) => {
                                     if (value === undefined) {
-                                        console.log('key', key)
                                         return null;
                                     }
                                     return value;
