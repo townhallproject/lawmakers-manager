@@ -173,13 +173,8 @@ async function getStateLegs() {
                     // This also updates the state legislator lookup table
                     newOfficePerson.createNewStateLawMaker();
 
-                    // Delete old office people document
-                    firebase.firestore.collection('office_people').doc(checkResult.id).delete();
-
-                    // Delete state legislator doc
-                    firebase.firestore.collection(`${newOfficePerson.state}_state_legislature`)
-                        .doc(checkResult.id)
-                        .delete();
+                    // Delete old office people document and the state legislator doc
+                    newOfficePerson.deleteExistingOutOfDateStateLawmakerById(id);
 
                     return newOfficePerson.id
                 };

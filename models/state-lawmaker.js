@@ -131,6 +131,16 @@ class StateLawmaker {
         });
     };
 
+    deleteExistingOutOfDateStateLawmakerById(id) {
+        // Delete old office person doc
+        firebase.firestore.collection('office_people').doc(id).delete();
+
+        // Delete state legislator doc
+        firebase.firestore.collection(`${this.state}_state_legislature`)
+            .doc(id)
+            .delete();
+    };
+
     createNewStateLawMaker(){
         let updates = firebase.firestore.batch();
 
