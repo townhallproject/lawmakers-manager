@@ -17,7 +17,7 @@ function getHouse() {
                 let data = JSON.parse(res.text);
                 return data.results[0].members;
             } catch (e) {
-                console.log(e);
+                console.log('error getting house', e);
             }
         });
 }
@@ -31,7 +31,7 @@ function getSenate() {
                 let data = JSON.parse(res.text);
                 return data.results[0].members;
             } catch (e) {
-                console.log(e);
+                console.log('error getting senate', e);
             }
         });
 }
@@ -45,7 +45,7 @@ function getSpecificMember(url) {
                 let data = JSON.parse(res.text);
                 return data.results[0];
             } catch (e) {
-                console.log(e.message);
+                console.log(`error looking up ${url} ${e.message}`);
                 return Promise.reject();
             }
         });
@@ -67,7 +67,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                         return newMember.createNew(fullProPublicaMember)
                     }
                     // TODO: update function
-                    return newMember.createNew(fullProPublicaMember)
+                    // return newMember.update(fullProPublicaMember)
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
@@ -85,7 +85,6 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 // call propublica 'new members' api endpoint
 Promise.all([getHouse(), getSenate()])
     .then(function (newMembers) {
-        const allMembers = newMembers[0].concat(newMembers[1]);
         console.log('got all new members');
         updateDatabaseWithNewMembers([...newMembers[0], ...newMembers[1]]);
     })
