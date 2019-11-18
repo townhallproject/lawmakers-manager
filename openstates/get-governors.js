@@ -2,7 +2,7 @@ require('dotenv').load();
 
 const superagent = require('superagent');
 const firebase = require('../lib/setupFirebase.js');
-const getStates = require('../lib/get-states');
+const getStates = require('../lib/get-included-state-legs');
 
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 const GoogleCivicsAPIKey = process.env.GOOGLE_CIVICS_API_KEY;
@@ -76,7 +76,7 @@ const createNew = (openStatesMember) => {
   const memberKey = getMemberKey(openStatesMember.displayName);
   const memberIDObject = {
     id: openStatesMember.thp_id,
-    nameEntered: openStatesMember.displayName,
+    display_name: openStatesMember.displayName,
   };
   const dataPath = 'state_legislators_data';
   const idPath = 'state_legislators_id';

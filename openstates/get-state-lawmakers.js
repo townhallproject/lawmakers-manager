@@ -1,9 +1,8 @@
 require('dotenv').load();
 
 const superagent = require('superagent');
-const firebase = require('../lib/setupFirebase.js');
-const getStates = require('../lib/get-states');
-
+const getStates = require('../lib/get-included-state-legs');
+const StateLawmaker = require('../models/state-lawmaker');
 const OpenStatesAPIKey = process.env.OPEN_STATES_API_KEY;
 
 function generateOpenStatesQueryString(stateName) {
@@ -45,15 +44,6 @@ function generateOpenStatesQueryString(stateName) {
   }`
 };
 
-const test = `query={
-  people {
-    edges {
-      node {
-        name
-      }
-    }
-  }
-}`
 
 function transformOpenStatesLegislatorsData(receivedData) {
     // Entire object of people to be stored
@@ -77,6 +67,8 @@ function transformOpenStatesLegislatorsData(receivedData) {
 
         // Process each member
         org.node.members.forEach(person => {
+            let id = person.person.id.replace('ocd-person/', '');
+
             // Match district type short code
             let chamberName = org.node.name.toLowerCase();
             let districtShortType = '';
@@ -120,8 +112,7 @@ function transformOpenStatesLegislatorsData(receivedData) {
                 toAddMember[contactDetail.type] = contactDetail.value;
             });
 
-            // Construct the thp lookup key
-            let id = person.person.id.replace('ocd-person/', '');
+            // // Construct the thp lookup key
 
             // Attach member to legislators map
             legislators[id] = toAddMember;
@@ -132,53 +123,9 @@ function transformOpenStatesLegislatorsData(receivedData) {
     return legislators;
 };
 
-const checkIsInDb = (openStatesMember) => {
-  const path = 'state_legislators_data';
-  const ref = `${path}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-  return firebase.realtimedb.ref(ref).once('value')
-    .then((snapshot) => {
-      return snapshot.exists();
-    })
-}
-
-const getMemberKey = (name) => {
-      let memberKey;
-      if (name.split(' ').length === 3) {
-        memberKey = name.split(' ')[1].toLowerCase() + name.split(' ')[2].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
-      } else {
-        memberKey = name.split(' ')[1].toLowerCase() + '_' + name.split(' ')[0].toLowerCase();
-      }
-      return memberKey.replace(/\W/g, '');
-}
-
-const createNew = (openStatesMember) => {
-  let updates = {};
-
-  const memberKey = getMemberKey(openStatesMember.displayName);
-  const memberIDObject = {
-    id: openStatesMember.thp_id,
-    nameEntered: openStatesMember.displayName,
-  };
-  const dataPath = 'state_legislators_data';
-  const idPath = 'state_legislators_id';
-  const dataRef = `${dataPath}/${openStatesMember.state}/${openStatesMember.thp_id}`;
-
-  updates[dataRef] = openStatesMember;
-  updates[`${idPath}/${openStatesMember.state}/${memberKey}`] = memberIDObject;
-  return firebase.realtimedb.ref().update(updates)
-      .catch(console.log)
-}
-
-const update = (member) => {
-  const dataPath = 'state_legislators_data';
-  const dataRef = `${dataPath}/${member.state}/${member.thp_id}`;
-  return firebase.realtimedb.ref(dataRef).update(member)
-    .catch(console.log)
-}
-
 async function getStateLegs() {
   stateCodes = await getStates().catch((err) => {
-    console.log(err);
+    console.log('err getting state legs list', err);
   });
   // Iterate through the state names and pull the data from Open States GraphQL API
   Object.keys(stateCodes).forEach(stateName => {
@@ -187,28 +134,66 @@ async function getStateLegs() {
       .set('X-API-Key', OpenStatesAPIKey)
       .send(generateOpenStatesQueryString(stateName))
       .then((data) => {
+        console.log('got data')
         return transformOpenStatesLegislatorsData(data.body);
       })
       .then((lawmakers) => {
         Object.keys(lawmakers).forEach(memberId => {
-          const member = lawmakers[memberId];
-          member.thp_id = memberId;
-          checkIsInDb(member)
-            .then((isInDatabase) => {
-              if (isInDatabase) {
-                console.log('already there, updating', member.thp_id)
-                update(member);
-              } else {
-                member.displayName = member.openStatesDisplayName;
-                console.log('creating new', member.displayName)
-                createNew(member);
-              }
-            })
-        })
-      })
-      .catch((error) => console.error('error getting lawmakers from openstates', error));
+          const person = lawmakers[memberId]
+          const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state)
+
+          // Unpack open states data
+          newOfficePerson.unpackOpenStatesLawmaker(person);
+
+          // Handle person unpacking and storage based off if member already exists in database
+          newOfficePerson.checkDatabaseShortInfo()
+            .then((checkResult) => {
+              // If an object was returned, we either need to do to nothing, or update the existing data
+              if (checkResult) {
+                // Check the id of the person found matches the open states id
+                if (newOfficePerson.id == checkResult.id) {
+                    // Great, don't do anything, this data is already correct
+                    console.log(`office person: ${newOfficePerson.id} already exists`);
+                    return newOfficePerson.id;
+                };
+
+                // This member was added to the database prior to open states adding them
+                // Get their full data, merge the already stored data with the open states data, and then update
+                // the database with their official id and propagate changes back to the state legislature lookup
+                console.log(`office person found by name; oldId: ${checkResult.id}, newId: ${newOfficePerson.id}`);
+
+                // Get full office person data
+                let existingData = newOfficePerson.checkForExistingStateLawmakerById(checkResult.id);
+                if (existingData) {
+                    // Handle merge
+                    newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
+
+                    // Create entirely new office person
+                    // This also updates the state legislator lookup table
+                    newOfficePerson.createNewStateLawMaker();
+
+                    // Delete old office people document and the state legislator doc
+                    newOfficePerson.deleteExistingOutOfDateStateLawmakerById(id);
+
+                    return newOfficePerson.id
+                };
+            };
+
+            // The checkResult value must have been `false`
+            // In this case, make an entirely new member
+            console.log(`creating new member: ${newOfficePerson.id}`);
+            newOfficePerson.createRoleFromOpenStates(person);
+            newOfficePerson.createNewStateLawMaker();
+
+            return newOfficePerson.id;
+            }).catch(err => {
+              console.log(
+                `error unpacking data; name: ${newOfficePerson.displayName}, id: ${newOfficePerson.id}, error: ${err}`)
+            });
+        });
+    })
+    .catch((error) => console.error('error getting lawmakers from openstates', error));
   });
-}
+};
 
 getStateLegs();
-

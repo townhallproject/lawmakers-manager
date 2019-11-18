@@ -11,9 +11,10 @@
   },
   "scripts": {
     "update-retiring": "node bin/update-retiring",
-    "pull": "node bin/update-from-propublica",
+    "seed-federal": "node bin/seed-federal-db-from-propublica.js",
+    "update-federal": "node bin/update-firestore-from-propublica.js",
     "get-state-lawmakers": "node openstates/get-state-lawmakers.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --env node --forceExit",
     "start": "node index.js"
   },
   "repository": {
@@ -27,13 +28,15 @@
   },
   "homepage": "https://github.com/townhallproject/lawmakers-manager#readme",
   "dependencies": {
+    "@google-cloud/firestore": "^2.6.0",
     "express": "^4.16.3",
-    "firebase-admin": "^5.13.1",
+    "firebase-admin": "^8.7.0",
     "mailgun-js": "^0.20.0",
     "moment": "^2.24.0",
     "superagent": "^3.8.3"
   },
   "devDependencies": {
-    "dotenv": "^6.0.0"
+    "dotenv": "^6.0.0",
+    "jest": "^24.9.0"
   }
 }
