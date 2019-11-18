@@ -57,7 +57,7 @@ class StateLawmaker {
         }).catch(function(error) {
             console.log(error);
             let errorEmail = new ErrorReport(
-                `${thisLawmaker.displayName}; id: ${thisLawmer.id}, error: ${error}`, 'Could not find open states member'
+                `${thisLawmaker.displayName}; id: ${thisLawmaker.id}, error: ${error}`, 'Could not find open states member'
             );
             // errorEmail.sendEmail('Megan Riel-Mehan <meganrm@townhallproject.com>');
         });
