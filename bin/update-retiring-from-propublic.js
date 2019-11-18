@@ -5,8 +5,7 @@ const moment = require('moment');
 
 const firebasedb = require('../lib/setupFirebase.js');
 const ErrorReport = require('../lib/errorReporting.js');
-const  { map, find, filter }  = require('lodash');
-const Moc = require('../lawmaker/moc-model');
+const  { map, filter }  = require('lodash');
 const propublicaAPI = process.env.PROPUBLICA;
 
 const oldUrl = 'https://api.propublica.org/congress/v1/116/house/members/leaving.json'

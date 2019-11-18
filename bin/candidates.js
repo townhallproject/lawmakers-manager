@@ -17,7 +17,6 @@ firebase.realtimedb.ref('candidate_keys').once('value')
                     if (candidateData.govtrack_id) {
                         queryRef = stateLegRef.where('govtrack_id', '==', candidateData.govtrack_id)
                     }
-                    // const newCandidate = new Office(id, state, chamber, level, status, );
                     return queryRef.get().then(function (querySnapshot) {
                         if (!querySnapshot.empty) {
                             querySnapshot.forEach(person => {

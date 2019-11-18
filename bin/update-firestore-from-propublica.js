@@ -6,8 +6,6 @@ const Moc = require('../models/moc');
 
 const propublicaAPI = process.env.PROPUBLICA;
 const newUrl = 'https://api.propublica.org/congress/v1/members/new.json';
-const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
-const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
 
 function getNewMembers() {
     return request
@@ -53,7 +51,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                         console.log('creating new', fullProPublicaMember.govtrack_id)
                         return newMember.createNew()
                     }
-                    return newMember.update()
+                    return newMember.update();
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
