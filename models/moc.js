@@ -2,8 +2,14 @@ const firebasedb = require('../lib/setupFirebase.js');
 const createMemberMetaDataObject = require('../lib/create-metadata-object');
 var statesAb = require('../data/stateMap.js');
 const Office = require('./office');
+const omitBy = require('lodash').omitBy;
+const isUndefined = require('lodash').isUndefined;
 
 class Moc {
+    static cleanMemberData(data) {
+        return omitBy(data, isUndefined)
+    }
+
     constructor(opts, id) {
         for (let key in opts) {
             if (opts[key]) {
@@ -56,7 +62,7 @@ class Moc {
             in_office: true,
         })
 
-        const moc = {...this}
+        const moc = Moc.cleanMemberData({...this})
         // Set the data object
         const personDataRef = firebasedb.firestore.collection('office_people').doc(this.propublica_id);
         updates.set(personDataRef, moc);
