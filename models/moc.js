@@ -51,7 +51,7 @@ class Moc {
 
         const memberIDObject = createMemberMetaDataObject({
             id: this.propublica_id,
-            govtrack_id: govtrack_id,
+            govtrack_id: govtrack_id || null,
             displayName: this.displayName,
             in_office: true,
         })
