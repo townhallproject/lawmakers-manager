@@ -86,55 +86,6 @@ class Moc {
         ref.update(this);
         console.log(`Updated member: ${this.id}`);
     };
-
-    // updateMocByStateDistrict(){
-    //     let moc = this;
-    //     if (!moc.in_office) {
-    //         return;
-    //     }
-    //     let path;
-    //     let obj = {
-    //         govtrack_id: moc.govtrack_id || null,
-    //         propublica_id: moc.propublica_id || null,
-    //         displayName: moc.displayName || null,
-    //     };
-    //     if (moc.type === 'sen') {
-    //         path = `mocByStateDistrict/${moc.state}/${moc.state_rank}/`;
-    //     } else if (moc.type === 'rep') {
-    //         let district;
-    //         if (moc.at_large === true) {
-    //             district = '00';
-    //         } else {
-    //             district = zeropadding(moc.district);
-    //         }
-    //         path = `mocByStateDistrict/${moc.state}-${district}/`;
-    //     }
-    //     return firebasedb.ref(path).update(obj);
-    // }
-
-    // static makeNewEndpoints() {
-    //     Moc.loadAllData()
-    //         .then((allMocs) => {
-    //             allMocs.forEach((moc) => {
-    //                 let newMoc = new Moc(moc);
-    //                 newMoc.updateMocByStateDistrict();
-    //             });
-    //         });
-    // };
-
-    // static loadAllData() {
-    //     var allMocs = [];
-    //     return new Promise(function (resolve, reject) {
-    //         firebasedb.ref('mocData/').once('value').then(function (snapshot) {
-    //             snapshot.forEach(function (member) {
-    //                 const memberobj = new Moc(member.val());
-    //                 allMocs.push(memberobj);
-    //             });
-    //             resolve(allMocs);
-    //         });
-    //     });
-    // };
-
 }
 
 module.exports = Moc;
