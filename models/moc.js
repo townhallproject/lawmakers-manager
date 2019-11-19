@@ -10,6 +10,63 @@ class Moc {
         return omitBy(data, isUndefined)
     }
 
+    static getCurrentRole(id) {
+        const personDataRef = firebasedb.firestore.collection('office_people').doc(id);
+        return personDataRef.get()
+            .then(doc => {
+                if (doc.empty) {
+                    return Promise.resolve('no person with that id')
+                }
+                return doc.data();
+            })
+            .then(person => {
+                if (!person) {
+                    return Promise.resolve('no person with that id')
+                }
+                if (!person.roles) {
+                    return Promise.resolve('person has no roles')
+
+                }
+                return person.roles[person.current_office_index];
+            })
+    }
+
+    static delete(id) {
+        firebasedb.firestore.collection('office_people').doc(id).delete();
+        firebasedb.firestore.collection('116th_congress').doc(id);
+        return Moc.getCurrentRole(id).then(role => {
+            const collection = role.chamber === 'upper' ? 'senators' : 'house_reps';
+            firebasedb.firestore.collection(collection).doc(id).delete();
+        })
+
+    }
+
+    static updateDisplayName(id, name) {
+        console.log("ID", id)
+        let updates = firebasedb.firestore.batch();
+        const data = {
+            displayName: name
+        }
+        // update the data object
+        const personDataRef = firebasedb.firestore.collection('office_people').doc(id);
+        updates.update(personDataRef, data);
+        return Moc.getCurrentRole(id).then(role => {
+
+            // Add to the lookup tables
+            const collection = role.chamber === 'upper' ? 'senators' : 'house_reps';
+            const collectionRef = firebasedb.firestore.collection(collection).doc(id);
+            updates.update(collectionRef, data);
+
+            const congressCollection = '116th_congress'
+            const congressCollectionRef = firebasedb.firestore.collection(congressCollection).doc(id);
+            updates.update(congressCollectionRef, data);
+
+            return updates.commit().then(function () {
+                console.log('successfully updated name', name)
+            }).catch(console.log)
+        })
+    }
+
     constructor(opts, id) {
         for (let key in opts) {
             if (opts[key]) {
@@ -62,13 +119,13 @@ class Moc {
             in_office: true,
         })
 
-        const moc = Moc.cleanMemberData({...this})
+        const moc = Moc.cleanMemberData({...this});
         // Set the data object
         const personDataRef = firebasedb.firestore.collection('office_people').doc(this.propublica_id);
         updates.set(personDataRef, moc);
 
         // Add to the lookup tables
-        const collection = this.chamber === 'upper' ? 'senators': 'house_reps';
+        const collection = this.roles[0].chamber === 'upper' ? 'senators' : 'house_reps';
         const collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
         updates.set(collectionRef, memberIDObject);
 
@@ -89,7 +146,7 @@ class Moc {
 
         // Run update
         const ref = firebasedb.firestore.collection('office_people').doc(this.id);
-        ref.update(this);
+        ref.update(Moc.cleanMemberData({...this}))
         console.log(`Updated member: ${this.id}`);
     };
 }
