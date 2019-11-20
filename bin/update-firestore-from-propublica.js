@@ -41,10 +41,12 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
         // check against propublica specific member search using id
         getSpecificMember(new_propub_member.api_uri)
             .then(function (fullProPublicaMember) {
-                fullProPublicaMember.chamber = new_propub_member.chamber === 'House' ? 'lower' : 'upper';
-                let newMember = new Moc(fullProPublicaMember);
-                let collection = newMember.chamber === 'lower' ? 'house_reps' : 'senators';
+                
+                let chamber = fullProPublicaMember.roles[0].chamber === 'House' ? 'lower' : 'upper';
+                let collection = chamber === 'lower' ? 'house_reps' : 'senators';
                 let officePeopleRef = firebasedb.firestore.collection(collection);
+
+                let newMember = new Moc(fullProPublicaMember);
                 let queryRef = officePeopleRef.where('id', '==', fullProPublicaMember.member_id);
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {

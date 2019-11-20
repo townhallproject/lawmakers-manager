@@ -35,16 +35,10 @@ firebase.realtimedb.ref('candidate_keys').once('value')
                                     }
                                     return value;
                                 })
-                                // personRef.update({
-                                //     campaigns: ['test']
-                                // })
-                                // .then(() => {
 
                                     personRef.update({
                                         campaigns: admin.firestore.FieldValue.arrayUnion(cleanCampaign)
                                     }).catch(console.log)
-                                // })
-                                // .catch(console.log)
 
                             })
                         }
