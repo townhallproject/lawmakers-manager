@@ -58,10 +58,11 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
             .then(function (fullProPublicaMember) {
                 let chamber = fullProPublicaMember.roles[0].chamber === 'House' ? 'lower' : 'upper';
                 let collection = chamber === 'lower' ? 'house_reps' : 'senators';
+                
+                let officePeopleRef = firebasedb.firestore.collection(collection);
                 let queryRef = officePeopleRef.where('id', '==', fullProPublicaMember.member_id);
 
                 let newMember = new Moc(fullProPublicaMember);
-                let officePeopleRef = firebasedb.firestore.collection(collection);
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {
                         console.log('creating new', fullProPublicaMember.govtrack_id)
