@@ -22,9 +22,9 @@ jobs:
       run: |
         npm run test
       env:
-        TESTING_FIREBASE_TOKEN: {{ secrets.TESTING_FIREBASE_TOKEN }}
-        TESTING_PROJECT_ID: {{ secrets.TESTING_PROJECT_ID }}
-        TESTING_CLIENT_EMAIL: {{ secrets.TESTING_CLIENT_EMAIL }}
-        TESTING_DATABASE_URL: {{ secrets.TESTING_DATABASE_URL }}
-        PROPUBLICA: {{ secrets.PROPUBLICA }}
-        OPEN_STATES_API_KEY: {{ secrets.OPEN_STATES_API_KEY }}
+        TESTING_FIREBASE_TOKEN: ${{ secrets.TESTING_FIREBASE_TOKEN }}
+        TESTING_PROJECT_ID: ${{ secrets.TESTING_PROJECT_ID }}
+        TESTING_CLIENT_EMAIL: ${{ secrets.TESTING_CLIENT_EMAIL }}
+        TESTING_DATABASE_URL: ${{ secrets.TESTING_DATABASE_URL }}
+        PROPUBLICA: ${{ secrets.PROPUBLICA }}
+        OPEN_STATES_API_KEY: ${{ secrets.OPEN_STATES_API_KEY }}
