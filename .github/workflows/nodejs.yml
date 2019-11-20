@@ -3,7 +3,7 @@ name: Node CI
 on: pull_request
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -15,10 +15,12 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install and test
+    - name: Install
       run: |
         npm i
-        npm test
+    - name: Test
+      run: |
+        npm run test
       env:
         TESTING_FIREBASE_TOKEN: {{ secrets.TESTING_FIREBASE_TOKEN }}
         TESTING_PROJECT_ID: {{ secrets.TESTING_PROJECT_ID }}
