@@ -28,7 +28,7 @@ jobs:
         npm i
     - name: Test
       run: |
-        npm run test
+        CI=true npm run test
       env:
         TESTING_FIREBASE_TOKEN: ${{ secrets.TESTING_FIREBASE_TOKEN }}
         TESTING_PROJECT_ID: ${{ secrets.TESTING_PROJECT_ID }}
