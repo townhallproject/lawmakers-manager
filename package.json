@@ -14,7 +14,7 @@
     "seed-federal": "node bin/seed-federal-db-from-propublica.js",
     "update-federal": "node bin/update-firestore-from-propublica.js",
     "get-state-lawmakers": "node openstates/get-state-lawmakers.js",
-    "test": "jest --env node --forceExit",
+    "test": "jest --env node --forceExit --detectOpenHandles",
     "start": "node index.js"
   },
   "repository": {
