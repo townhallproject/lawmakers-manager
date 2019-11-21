@@ -1,0 +1,38 @@
+name: Node CI
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    # <minute [0,59]> <hour [0,23]> <day of the month [1,31]> <month of the year [1,12]> <day of the week [0,6]>
+    # https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07
+    # Run every Wednesday at 02:00:00 UTC (Tuesday at 06:00:00 PST)
+    - cron: '0 2 * * 2'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install
+      run: |
+        npm i
+    - name: Test
+      run: |
+        CI=true npm run test
+      env:
+        TESTING_FIREBASE_TOKEN: ${{ secrets.TESTING_FIREBASE_TOKEN }}
+        TESTING_PROJECT_ID: ${{ secrets.TESTING_PROJECT_ID }}
+        TESTING_CLIENT_EMAIL: ${{ secrets.TESTING_CLIENT_EMAIL }}
+        TESTING_DATABASE_URL: ${{ secrets.TESTING_DATABASE_URL }}
+        PROPUBLICA: ${{ secrets.PROPUBLICA }}
+        OPEN_STATES_API_KEY: ${{ secrets.OPEN_STATES_API_KEY }}
