@@ -1,14 +1,17 @@
+const isUndefined = require('lodash').isUndefined;
+
 const firebase = require('../lib/setupFirebase');
 const Office = require('./office');
 const ErrorReport = require('../lib/errorReporting');
 const getStateNameFromAbr = require('../lib/get-state-abr-and-name').getStateNameFromAbr;
 
 class StateLawmaker {
-    constructor(id, displayName, state, in_office) {
+    constructor(id, displayName, state, party, in_office) {
         this.id = id;
         this.displayName = displayName;
         this.state = state;
-        this.in_office = in_office || true;
+        this.party = party;
+        this.in_office = isUndefined(in_office) ? true : in_office;
     };
 
     checkDatabaseShortInfo() {
@@ -67,6 +70,10 @@ class StateLawmaker {
         // These are easy to unpack
         this.openStatesDisplayName = person.openStatesDisplayName;
     };
+
+    // changeParty() {
+    //     this.
+    // }
 
     checkIfCurrentRolesMatch(person) {
         if (this.roles) {
@@ -141,6 +148,31 @@ class StateLawmaker {
             .delete();
     };
 
+    createNewCandidate() {
+        let updates = firebase.firestore.batch();
+
+        const memberIDObject = {
+            id: this.id,
+            displayName: this.displayName,
+            in_office: this.in_office
+        };
+
+        const personDataRef = firebase.firestore.collection('office_people').doc(this.id);
+        updates.set(personDataRef, JSON.parse(JSON.stringify(this)));
+        if (this.level === 'state') {
+            const collection = `${this.state}_state_legislature`;
+            const collectionRef = firebase.firestore.collection(collection).doc(this.id);
+            updates.set(collectionRef, memberIDObject);
+        } else {
+            const collection = "federal_candidates";
+            const collectionRef = firebase.firestore.collection(collection).doc(this.id);
+            updates.set(collectionRef, memberIDObject);
+        }
+        return updates.commit().then(function () {
+            console.log('successfully added')
+        }).catch(console.log);
+    }
+
     createNewStateLawMaker(){
         let updates = firebase.firestore.batch();
 
@@ -155,7 +187,6 @@ class StateLawmaker {
         const collection = `${this.state}_state_legislature`;
         const collectionRef = firebase.firestore.collection(collection).doc(this.id);
         updates.set(collectionRef, memberIDObject);
-        console.log(this, memberIDObject);
         return updates.commit().then(function () {
             console.log('successfully added')
         }).catch(console.log);
