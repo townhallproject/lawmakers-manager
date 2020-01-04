@@ -1,4 +1,4 @@
-require('dotenv').load();
+require('dotenv').config();
 
 const superagent = require('superagent');
 const getStates = require('../lib/get-included-state-legs');
@@ -67,6 +67,10 @@ function transformOpenStatesLegislatorsData(receivedData) {
 
         // Process each member
         org.node.members.forEach(person => {
+            if (!person.person) {
+              console.log(person)
+              return;
+            }
             let id = person.person.id.replace('ocd-person/', '');
 
             // Match district type short code
@@ -134,17 +138,14 @@ async function getStateLegs() {
       .set('X-API-Key', OpenStatesAPIKey)
       .send(generateOpenStatesQueryString(stateName))
       .then((data) => {
-        console.log('got data')
         return transformOpenStatesLegislatorsData(data.body);
       })
       .then((lawmakers) => {
         Object.keys(lawmakers).forEach(memberId => {
           const person = lawmakers[memberId]
-          const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state)
-
+          const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state, person.party)
           // Unpack open states data
           newOfficePerson.unpackOpenStatesLawmaker(person);
-
           // Handle person unpacking and storage based off if member already exists in database
           newOfficePerson.checkDatabaseShortInfo()
             .then((checkResult) => {
@@ -153,8 +154,8 @@ async function getStateLegs() {
                 // Check the id of the person found matches the open states id
                 if (newOfficePerson.id == checkResult.id) {
                     // Great, don't do anything, this data is already correct
-                    console.log(`office person: ${newOfficePerson.id} already exists`);
-                    return newOfficePerson.id;
+                    // console.log(`office person: ${newOfficePerson.id} already exists`);
+                    return newOfficePerson.updateBasicInfo();
                 };
 
                 // This member was added to the database prior to open states adding them

@@ -112,7 +112,12 @@ class StateLawmaker {
 
     updateBasicInfo(collection) {
         const ref = firebase.firestore.collection('office_people').doc(this.id);
-        ref.update(this);
+        const info = {party: this.party}
+        if (!this.party) {
+            console.log('missing party')
+            return;
+        }
+        ref.update(info);
     };
 
     updateRoles(collection) {
