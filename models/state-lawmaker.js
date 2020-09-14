@@ -180,13 +180,12 @@ class StateLawmaker {
 
     createNewStateLawMaker(){
         let updates = firebase.firestore.batch();
-
         const memberIDObject = {
             id: this.id,
             displayName: this.displayName,
             in_office: this.in_office,
-            state: this.roles[this.current_office_index].state,
-            district: this.roles[this.current_office_index].district,
+            state: this.roles ? this.roles[this.current_office_index].state : '',
+            district: this.roles ? this.roles[this.current_office_index].district: '',
         };
         console.log(memberIDObject)
         const personDataRef = firebase.firestore.collection('office_people').doc(this.id);

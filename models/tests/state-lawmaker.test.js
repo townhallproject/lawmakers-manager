@@ -27,20 +27,24 @@ const NOT_A_PRESENT_MEMBER = new StateLawmaker(
 const EXPECTED_RESULT_IF_FOUND = {
     'displayName': 'Vince Leach',
     'id': '00f9103d-191e-40ca-8f5c-e5bf806896a6',
-    'in_office': true
+    'in_office': true,
+    'district': '',
+    'state': ''
 }
 
 const EXPECTED_TEMP_INFO = {
     'displayName': 'Entered By Volunteer',
     'id': 'temp-id',
-    'in_office': true
+    'in_office': true,
+    'district': '',
+    'state': ''
 }
 
 describe('open states module', () => {
     beforeAll(() => {
-        PRESENT_MEMBER_BY_ID.createNewStateLawMaker();
-        PRESENT_MEMBER_BY_NAME.createNewStateLawMaker();
-        
+        return Promise.all([PRESENT_MEMBER_BY_ID.createNewStateLawMaker(), 
+             PRESENT_MEMBER_BY_NAME.createNewStateLawMaker()
+        ])
     });
     afterAll(() => {
         PRESENT_MEMBER_BY_ID.deleteExistingOutOfDateStateLawmakerById("temp-id");
@@ -51,6 +55,7 @@ describe('open states module', () => {
         describe('given valid id', () => {
             test('should return a completed object', () => {
                 return PRESENT_MEMBER_BY_ID.checkDatabaseShortInfo().then((actualMember) => {
+                    console.log(actualMember)
                     expect(actualMember).toEqual(EXPECTED_RESULT_IF_FOUND);
                 });
             });
