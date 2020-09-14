@@ -66,9 +66,8 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                 queryRef.get().then(function (querySnapshot) {
                     if (querySnapshot.empty) {
                         console.log('creating new', fullProPublicaMember.govtrack_id)
-                        return newMember.createNew(fullProPublicaMember)
+                        return newMember.createNew()
                     }
-                    // TODO: update function
                     let databaseData = {}
                     querySnapshot.forEach((ele) => databaseData = ele.data())
                     return newMember.update(databaseData)
