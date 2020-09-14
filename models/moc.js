@@ -2,6 +2,7 @@ const firebasedb = require('../lib/setupFirebase.js');
 const createMemberMetaDataObject = require('../lib/create-metadata-object');
 var statesAb = require('../data/stateMap.js');
 const Office = require('./office');
+const { isEmpty } = require('lodash');
 const omitBy = require('lodash').omitBy;
 const isUndefined = require('lodash').isUndefined;
 
@@ -40,6 +41,8 @@ class Moc {
         })
 
     }
+
+
 
     static updateDisplayName(id, name) {
         console.log("ID", id)
@@ -102,6 +105,31 @@ class Moc {
        })
     }
 
+    makeRole(role) {
+        const chamberMapping = {
+            House: 'lower',
+            Senate: 'upper',
+        }
+        return {
+            ...new Office(this.propublica_id, role.state, chamberMapping[role.chamber], 'federal', 'won', role)
+        }
+    }
+
+    getUpdatedRoles(indexToUpdate, roles, newRoleData) {
+
+        return roles.map((role, index) => {
+            if (index === indexToUpdate) {
+                return {
+                    ...role,
+                    ...newRoleData
+                }
+            } else {
+                return role
+            }
+        })
+    }
+    
+
     createNew() {
         let updates = firebasedb.firestore.batch();
 
@@ -145,16 +173,55 @@ class Moc {
         }).catch(console.log)
     };
 
-    update() {
-        // Ensure that the end date and current office index are both updated
-        this.mapRoles();
-        this.end_date = this.roles[0].end_date;
-        this.current_office_index = 0; //TODO: decide if we want these to be uids
-
-        // Run update
+    update(dbEntry) {
         const ref = firebasedb.firestore.collection('office_people').doc(this.id);
-        ref.update(Moc.cleanMemberData({...this}))
-        console.log(`Updated member: ${this.id}`);
+        const dataFromPropublica = Moc.cleanMemberData({
+                    ...this})
+        const dataInDatabase = dbEntry;
+
+        const toAdd = {}
+
+        for (const key in dataFromPropublica) {
+            const dbele = dataInDatabase[key];
+            const ppele = dataFromPropublica[key];
+            if (ppele && dbele !== ppele && key !== 'roles' && key !== 'last_updated') {
+                toAdd[key] = ppele
+            }
+
+        }
+        if (!dataInDatabase.current_office_index && dataInDatabase.current_office_index !== 0) {
+            dataInDatabase.current_office_index = 0;
+            toAdd.current_office_index = 0;
+        }
+        const currentRoleFromPropublica = this.makeRole(dataFromPropublica.roles[0]);
+        const currentRoleFromDB = dataInDatabase.roles[dataInDatabase.current_office_index];
+        const newRole = {}
+        // make sure both exist and it's the same role/office before we check for changes
+        if (currentRoleFromDB && currentRoleFromPropublica && 
+            currentRoleFromDB.start_date === currentRoleFromPropublica.start_date) {
+                for (const key in currentRoleFromPropublica) {
+                    const dbele = currentRoleFromDB[key];
+                    const ppele = currentRoleFromPropublica[key];
+                    if (ppele && dbele !== ppele) {
+                        newRole[key] = ppele
+                    }
+        
+                }
+        } else {
+            console.log(dataInDatabase.displayName, currentRoleFromPropublica, dataInDatabase.roles)
+        }
+        if (!isEmpty(newRole)) {
+            console.log('update role', dataInDatabase.displayName, newRole);
+            toAdd.roles = this.getUpdatedRoles(dataInDatabase.current_office_index, dataInDatabase.roles, newRole)
+        }
+        if (!isEmpty(toAdd)) {
+            toAdd.last_updated = {
+                by: "propublica",
+                time: this.last_updated
+            }
+            ref.update(toAdd)
+            console.log(`Updated member: ${dataInDatabase.displayName}`);
+        }
     };
 }
 
