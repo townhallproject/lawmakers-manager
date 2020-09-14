@@ -59,7 +59,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                 let chamber = fullProPublicaMember.roles[0].chamber === 'House' ? 'lower' : 'upper';
                 let collection = chamber === 'lower' ? 'house_reps' : 'senators';
                 
-                let officePeopleRef = firebasedb.firestore.collection(collection);
+                let officePeopleRef = firebasedb.firestore.collection('office_people');
                 let queryRef = officePeopleRef.where('id', '==', fullProPublicaMember.member_id);
 
                 let newMember = new Moc(fullProPublicaMember);
@@ -69,7 +69,9 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
                         return newMember.createNew(fullProPublicaMember)
                     }
                     // TODO: update function
-                    // return newMember.update(fullProPublicaMember)
+                    let databaseData = {}
+                    querySnapshot.forEach((ele) => databaseData = ele.data())
+                    return newMember.update(databaseData)
                     }).catch(function(error){
                         console.log(error)
                       let errorEmail = new ErrorReport(newMember.govtrack_id + ':' + error, 'Could not find propublica member');
@@ -87,7 +89,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 // call propublica 'new members' api endpoint
 Promise.all([getHouse(), getSenate()])
     .then(function (newMembers) {
-        console.log('got all new members');
+        console.log('got all current members');
         updateDatabaseWithNewMembers([...newMembers[0], ...newMembers[1]]);
     })
     .catch(function (error) {
