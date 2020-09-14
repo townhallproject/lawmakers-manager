@@ -105,7 +105,7 @@ class StateLawmaker {
     };
 
     createRoleFromOpenStates(data) {
-        const role = new Office(this.id, this.state, data.chamber, 'state', 'won', data);
+        const role = new Office(0, this.state, data.chamber, 'state', 'won', data);
         this.current_office_index = 0;
         this.roles = [role];
     };
@@ -174,7 +174,7 @@ class StateLawmaker {
             updates.set(collectionRef, memberIDObject);
         }
         return updates.commit().then(function () {
-            console.log('successfully added')
+            // console.log('successfully added')
         }).catch(console.log);
     }
 
@@ -184,9 +184,11 @@ class StateLawmaker {
         const memberIDObject = {
             id: this.id,
             displayName: this.displayName,
-            in_office: this.in_office
+            in_office: this.in_office,
+            state: this.roles[this.current_office_index].state,
+            district: this.roles[this.current_office_index].district,
         };
-
+        console.log(memberIDObject)
         const personDataRef = firebase.firestore.collection('office_people').doc(this.id);
         updates.set(personDataRef, JSON.parse(JSON.stringify(this)));
         const collection = `${this.state}_state_legislature`;
