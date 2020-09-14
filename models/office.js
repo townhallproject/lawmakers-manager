@@ -30,6 +30,7 @@ class Office {
         this.bills_cosponsored = opts.bills_cosponsored || null;
         this.missed_votes_pct = opts.missed_votes_pct || null;
         this.votes_with_party_pct = opts.votes_with_party_pct || null;
+        this.next_election = opts.next_election || null;
     };
 
     unpackOpenStatesRole(data) {
