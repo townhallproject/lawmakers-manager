@@ -69,7 +69,7 @@ class Moc {
 
     constructor(opts, id) {
         for (let key in opts) {
-            if (opts[key]) {
+            if (opts[key] != undefined) {
                 this[key] = opts[key];
             }
         }
@@ -107,7 +107,9 @@ class Moc {
 
         this.displayName = this.first_name + ' ' + this.last_name;
         this.end_date = this.roles[0].end_date;
-        this.current_office_index = 0; //TODO: decide if we want these to be uids
+        if (this.in_office) {
+            this.current_office_index = 0; //TODO: decide if we want these to be uids
+        }
         const govtrack_id = this.govtrack_id;
 
         this.mapRoles();
@@ -116,7 +118,7 @@ class Moc {
             id: this.propublica_id,
             govtrack_id: govtrack_id || null,
             displayName: this.displayName,
-            in_office: true,
+            in_office: this.in_office,
         })
 
         const moc = Moc.cleanMemberData({...this});
@@ -125,13 +127,18 @@ class Moc {
         updates.set(personDataRef, moc);
 
         // Add to the lookup tables
-        const collection = this.roles[0].chamber === 'upper' ? 'senators' : 'house_reps';
-        const collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
-        updates.set(collectionRef, memberIDObject);
+        if (this.in_office) {
+            const collection = this.roles[0].chamber === 'upper' ? 'senators' : 'house_reps';
+            const collectionRef = firebasedb.firestore.collection(collection).doc(this.propublica_id);
+            updates.set(collectionRef, memberIDObject);
+        }
+        if (this.roles[0].congress) {
+            const congressCollection = `${this.roles[0].congress}th_congress`;
+            console.log(congressCollection)
+            const congressCollectionRef = firebasedb.firestore.collection(congressCollection).doc(this.propublica_id);
+            updates.set(congressCollectionRef, memberIDObject);
+        }
 
-        const congressCollection = '116th_congress'
-        const congressCollectionRef = firebasedb.firestore.collection(congressCollection).doc(this.propublica_id);
-        updates.set(congressCollectionRef, memberIDObject);
 
         return updates.commit().then(function () {
             console.log('successfully added', moc.displayName)
