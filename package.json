@@ -15,6 +15,7 @@
     "seed-federal-candidates": "node local-scripts/candidates.js",
     "update-federal": "node bin/update-firestore-from-propublica.js",
     "get-state-lawmakers": "node openstates/get-state-lawmakers.js",
+    "get-senate-whip-count": "node bin/senate-whip.js",
     "test": "NODE_ENV=dev jest --env node --forceExit",
     "start": "node index.js"
   },
