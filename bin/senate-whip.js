@@ -113,7 +113,7 @@ googleMethods
             let quote = null;
             if (quoteText) {
                 quote = {
-                    text: quoteText.replace(/\"/, ""),
+                    text: quoteText,
                     citation: quoteCitation || null,
                     year: quoteYear || null,
                 }
