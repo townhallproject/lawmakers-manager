@@ -94,17 +94,28 @@ const sheets = google.sheets({
     auth: oAuth2Client
 });
 googleMethods
-    .read(sheets, SHEETS_ID, "senate!A2:H101")
+    .read(sheets, SHEETS_ID, "senate!A2:I101")
     .then(googleRows => {
         const total = googleRows.length;
         let done = 0;
         googleRows.forEach(async (row, index) => {
-            const [memberId, firstName, lastName, party, status, statusCitation, quoteText, quoteCitation] = row;
+            const [
+                memberId, 
+                firstName, 
+                lastName, 
+                party, 
+                status, 
+                statusCitation, 
+                quoteText, 
+                quoteCitation, 
+                quoteYear
+            ] = row;
             let quote = null;
             if (quoteText) {
                 quote = {
                     text: quoteText.replace(/"/, ""),
-                    citation: quoteCitation || null
+                    citation: quoteCitation || null,
+                    year: quoteYear || null,
                 }
             }
             const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
