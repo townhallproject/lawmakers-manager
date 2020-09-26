@@ -129,55 +129,58 @@ function transformOpenStatesLegislatorsData(receivedData) {
 
 async function getStateLegs() {
   stateCodes = await getStates().catch((err) => {
-    console.log('err getting state legs list', err);
+    console.log('err getting state legs list', err.message);
+    process.exit(1);
   });
   // Iterate through the state names and pull the data from Open States GraphQL API
-  Object.keys(stateCodes).forEach(stateName => {
-    superagent
-      .post('https://openstates.org/graphql')
-      .set('X-API-Key', OpenStatesAPIKey)
-      .send(generateOpenStatesQueryString(stateName))
-      .then((data) => {
-        return transformOpenStatesLegislatorsData(data.body);
-      })
-      .then((lawmakers) => {
-        Object.keys(lawmakers).forEach(memberId => {
-          const person = lawmakers[memberId]
-          const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state, person.party)
-          // Unpack open states data
-          newOfficePerson.unpackOpenStatesLawmaker(person);
-          // Handle person unpacking and storage based off if member already exists in database
-          newOfficePerson.checkDatabaseShortInfo()
-            .then((checkResult) => {
-              // If an object was returned, we either need to do to nothing, or update the existing data
-              if (checkResult) {
-                // Check the id of the person found matches the open states id
-                if (newOfficePerson.id == checkResult.id) {
-                    // Great, don't do anything, this data is already correct
-                    // console.log(`office person: ${newOfficePerson.id} already exists`);
-                    return newOfficePerson.updateBasicInfo();
-                };
+  Object.keys(stateCodes).forEach(async stateName => {
+    try {
+      const data = await superagent
+        .post('https://openstates.org/graphql')
+        .set('X-API-Key', OpenStatesAPIKey)
+        .send(generateOpenStatesQueryString(stateName));
+      if (!data) {
+        console.log('no data returned from open states')
+        return process.exit(1);
+      }
+      const lawmakers = transformOpenStatesLegislatorsData(data.body);
+      Object.keys(lawmakers).forEach(memberId => {
+        const person = lawmakers[memberId];
+        const newOfficePerson = new StateLawmaker(memberId, person.openStatesDisplayName, person.state, person.party);
+        // Unpack open states data
+        newOfficePerson.unpackOpenStatesLawmaker(person);
+        // Handle person unpacking and storage based off if member already exists in database
+        newOfficePerson.checkDatabaseShortInfo()
+          .then((checkResult) => {
+            // If an object was returned, we either need to do to nothing, or update the existing data
+            if (checkResult) {
+              // Check the id of the person found matches the open states id
+              if (newOfficePerson.id == checkResult.id) {
+                // Great, don't do anything, this data is already correct
+                // console.log(`office person: ${newOfficePerson.id} already exists`);
+                return newOfficePerson.updateBasicInfo();
+              };
 
-                // This member was added to the database prior to open states adding them
-                // Get their full data, merge the already stored data with the open states data, and then update
-                // the database with their official id and propagate changes back to the state legislature lookup
-                console.log(`office person found by name; oldId: ${checkResult.id}, newId: ${newOfficePerson.id}`);
+              // This member was added to the database prior to open states adding them
+              // Get their full data, merge the already stored data with the open states data, and then update
+              // the database with their official id and propagate changes back to the state legislature lookup
+              console.log(`office person found by name; oldId: ${checkResult.id}, newId: ${newOfficePerson.id}`);
 
-                // Get full office person data
-                let existingData = newOfficePerson.checkForExistingStateLawmakerById(checkResult.id);
-                if (existingData) {
-                    // Handle merge
-                    newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
+              // Get full office person data
+              let existingData = newOfficePerson.checkForExistingStateLawmakerById(checkResult.id);
+              if (existingData) {
+                // Handle merge
+                newOfficePerson.mergeExistingOpenStatesData(doc.data(), person);
 
-                    // Create entirely new office person
-                    // This also updates the state legislator lookup table
-                    newOfficePerson.createNewStateLawMaker();
+                // Create entirely new office person
+                // This also updates the state legislator lookup table
+                newOfficePerson.createNewStateLawMaker();
 
-                    // Delete old office people document and the state legislator doc
-                    newOfficePerson.deleteExistingOutOfDateStateLawmakerById(id);
+                // Delete old office people document and the state legislator doc
+                newOfficePerson.deleteExistingOutOfDateStateLawmakerById(id);
 
-                    return newOfficePerson.id
-                };
+                return newOfficePerson.id;
+              };
             };
 
             // The checkResult value must have been `false`
@@ -187,13 +190,15 @@ async function getStateLegs() {
             newOfficePerson.createNewStateLawMaker();
 
             return newOfficePerson.id;
-            }).catch(err => {
-              console.log(
-                `error unpacking data; name: ${newOfficePerson.displayName}, id: ${newOfficePerson.id}, error: ${err}`)
-            });
-        });
-    })
-    .catch((error) => console.error('error getting lawmakers from openstates', error));
+          }).catch(err => {
+            console.log(
+              `error unpacking data; name: ${newOfficePerson.displayName}, id: ${newOfficePerson.id}, error: ${err}`);
+          });
+      });
+    } catch (error) {
+      console.error('error getting lawmakers from openstates', error);
+      process.exit(1);
+    }
   });
 };
 
