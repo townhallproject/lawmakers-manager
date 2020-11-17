@@ -145,7 +145,7 @@ googleMethods
             const data = snapshot.data();
             const statusNo = status ? status.split('. ')[0] : "6";
             const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
-            const electionStatusNo = electionAcknowledgmentStatus ? nomineeStatus.split('. ')[0] : "4";
+            const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
             const electionStatusCitation = electionAcknowledgmentCitation;
             const senator = new Senator(data, statusNo, statusCitation || null, quote, nomineeStatusNo, electionStatusNo, electionStatusCitation);
             const dataToWrite = senateConverter.toFirestore(senator);
