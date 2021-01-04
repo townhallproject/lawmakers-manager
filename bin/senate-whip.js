@@ -39,9 +39,12 @@ class Senator {
         this.electionAcknowledgmentCitation = electionAcknowledgmentCitation;
         this.statusCitation = statusCitation;
         this.quote = quote;
-        this.last_name = opts.last_name;
-        this.first_name = opts.first_name;
+        this.last_name = opts.last_name || null;
+        this.first_name = opts.first_name || null;
         this.govtrack_id = opts.govtrack_id;
+        if (!opts.roles) {
+            console.log('no role', opts.displayName);
+        }
         const office = opts.roles[0];
         this.state = office.state;
         this.seniority = office.seniority;
@@ -140,6 +143,9 @@ googleMethods
                     year: quoteYear || null,
                 }
             }
+            if (!memberId) {
+                return;
+            }
             const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
                 .get();
             const data = snapshot.data();
@@ -156,6 +162,9 @@ googleMethods
                         process.exit(0)
 
                     }
+                }).catch((err) => {
+
+                    console.log(dataToWrite, err)
                 })
        
         })
