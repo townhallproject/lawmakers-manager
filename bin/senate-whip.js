@@ -30,13 +30,15 @@ const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl)
 oAuth2Client.credentials = currentToken;
 
 class Senator {
-    constructor(opts, status, statusCitation, quote, nomineeStatusNo, electionAcknowledgmentStatus, electionAcknowledgmentCitation) {
+    constructor(opts, status, statusCitation, quote, nomineeStatusNo, electionAcknowledgmentStatus, electionAcknowledgmentCitation, impeachmentStatusNo, impeachmentCitation) {
         this.displayName = opts.displayName;
         this.party = opts.party;
         this.status = status;
         this.nomineeStatus = nomineeStatusNo;
         this.electionAcknowledgmentStatus = electionAcknowledgmentStatus;
         this.electionAcknowledgmentCitation = electionAcknowledgmentCitation;
+        this.impeachmentStatus = impeachmentStatusNo;
+        this.impeachmentCitation = impeachmentCitation;
         this.statusCitation = statusCitation;
         this.quote = quote;
         this.last_name = opts.last_name || null;
@@ -76,6 +78,8 @@ var senateConverter = {
             nomineeStatus: senator.nomineeStatus || null,
             electionAcknowledgmentStatus: senator.electionAcknowledgmentStatus,
             electionAcknowledgmentCitation: senator.electionAcknowledgmentCitation || "",
+            impeachmentStatus: senator.impeachmentStatus,
+            impeachmentCitation: senator.impeachmentCitation || "",
             quote: senator.quote,
             govtrack_id: senator.govtrack_id,
             state: senator.state,
@@ -103,7 +107,7 @@ const sheets = google.sheets({
     auth: oAuth2Client
 });
 googleMethods
-    .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:Y101")
+    .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AB101")
     .then(googleRows => {
         const total = googleRows.length;
         let done = 0;
@@ -134,6 +138,9 @@ googleMethods
                 dcStatehoodCitation,
                 electionAcknowledgmentStatus,
                 electionAcknowledgmentCitation,
+                electionOldQuote,
+                impeachmentStatus,
+                impeachmentCitation,
             ] = row;
             let quote = null;
             if (quoteText) {
@@ -153,7 +160,8 @@ googleMethods
             const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
             const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
             const electionStatusCitation = electionAcknowledgmentCitation;
-            const senator = new Senator(data, statusNo, statusCitation || null, quote, nomineeStatusNo, electionStatusNo, electionStatusCitation);
+            const impeachmentStatusNo = impeachmentStatus ? impeachmentStatus.split('. ')[0] : "3";
+            const senator = new Senator(data, statusNo, statusCitation || null, quote, nomineeStatusNo, electionStatusNo, electionStatusCitation, impeachmentStatusNo, impeachmentCitation);
             const dataToWrite = senateConverter.toFirestore(senator);
             return firebasedb.firestore.collection('whip_count_2020').doc(memberId).set(dataToWrite)
                 .then(() => {
