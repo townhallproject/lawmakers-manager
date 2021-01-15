@@ -73,7 +73,7 @@ function updateDatabaseWithNewMembers(newPropublicaMembers) {
 // call propublica 'new members' api endpoint
 getNewMembers()
     .then(function (newMembers) {
-        console.log('got all new members', newMembers);
+        console.log('got all new members');
         updateDatabaseWithNewMembers(newMembers);
     })
     .catch(function (error) {
