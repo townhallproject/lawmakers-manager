@@ -30,17 +30,16 @@ const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl)
 oAuth2Client.credentials = currentToken;
 
 class Senator {
-    constructor(opts, status, statusCitation, quote, nomineeStatusNo, electionAcknowledgmentStatus, electionAcknowledgmentCitation, impeachmentStatusNo, impeachmentCitation) {
+    constructor(opts, status, statusCitation, quote, additionalStatuses ) {
         this.displayName = opts.displayName;
         this.party = opts.party;
         this.status = status;
-        this.nomineeStatus = nomineeStatusNo;
-        this.electionAcknowledgmentStatus = electionAcknowledgmentStatus;
-        this.electionAcknowledgmentCitation = electionAcknowledgmentCitation;
-        this.impeachmentStatus = impeachmentStatusNo;
-        this.impeachmentCitation = impeachmentCitation;
         this.statusCitation = statusCitation;
         this.quote = quote;
+
+        for (const key in additionalStatuses) {
+            this[key] = additionalStatuses[key];    
+        }
         this.last_name = opts.last_name || null;
         this.first_name = opts.first_name || null;
         this.govtrack_id = opts.govtrack_id;
@@ -68,6 +67,7 @@ class Senator {
 // Firestore data converter
 var senateConverter = {
     toFirestore: function (senator) {
+
         return {
             displayName: senator.displayName,
             last_name: senator.last_name,
@@ -75,11 +75,15 @@ var senateConverter = {
             party: senator.party,
             status: senator.status,
             statusCitation: senator.statusCitation,
-            nomineeStatus: senator.nomineeStatus || null,
-            electionAcknowledgmentStatus: senator.electionAcknowledgmentStatus,
-            electionAcknowledgmentCitation: senator.electionAcknowledgmentCitation || "",
-            impeachmentStatus: senator.impeachmentStatus,
+            nomineeStatus: senator.nomineeStatusNo || null,
+            electionAcknowledgmentStatus: senator.electionStatusNo,
+            electionAcknowledgmentCitation: senator.electionStatusCitation || "",
+            impeachmentStatus: senator.impeachmentStatusNo,
             impeachmentCitation: senator.impeachmentCitation || "",
+            filibusterReformStatus: senator.filibusterReformStatusNo,
+            filibusterReformCitation: senator.filibusterReformCitation || "",
+            dcStatehoodStatus: senator.dcStatehoodStatusNo,
+            dcStatehoodCitation: senator.dcStatehoodCitation || "",
             quote: senator.quote,
             govtrack_id: senator.govtrack_id,
             state: senator.state,
@@ -151,8 +155,12 @@ googleMethods
                 }
             }
             if (!memberId) {
+                console.log(row)
+                done++;
                 return;
+
             }
+            const formatNumber = (status) => status.split('. ')[0];
             const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
                 .get();
             const data = snapshot.data();
@@ -161,8 +169,38 @@ googleMethods
             const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
             const electionStatusCitation = electionAcknowledgmentCitation;
             const impeachmentStatusNo = impeachmentStatus ? impeachmentStatus.split('. ')[0] : "3";
-            const senator = new Senator(data, statusNo, statusCitation || null, quote, nomineeStatusNo, electionStatusNo, electionStatusCitation, impeachmentStatusNo, impeachmentCitation);
+            const dcStatehoodStatusNo = dcStatehoodStatus ? formatNumber(dcStatehoodStatus) : "4";
+            const filibusterReformStatusNo = filibusterReformStatus ? formatNumber(filibusterReformStatus) : "4";
+            if (!data) {
+                done++;
+                return console.log(memberId)
+            }
+            const senator = new Senator(
+                data, 
+                statusNo, 
+                statusCitation || null, 
+                quote,
+                {
+                    nomineeStatusNo,
+                    nomineeStatusCitation: nomineeStatusCitation || "",
+                    electionStatusNo,
+                    electionStatusCitation: electionStatusCitation || "",
+                    impeachmentStatusNo,
+                    impeachmentCitation: impeachmentCitation || "",
+                    filibusterReformStatusNo,
+                    filibusterReformCitation: filibusterReformCitation || "",
+                    dcStatehoodStatusNo,
+                    dcStatehoodCitation: dcStatehoodCitation || "",
+                })
             const dataToWrite = senateConverter.toFirestore(senator);
+            // for (const key in dataToWrite) {
+            //     if (Object.hasOwnProperty.call(dataToWrite, key)) {
+            //         const element = dataToWrite[key];
+            //         if (element === undefined) {
+            //             console.log(dataToWrite.displayName, key)
+            //         }
+            //     }
+            // }
             return firebasedb.firestore.collection('whip_count_2020').doc(memberId).set(dataToWrite)
                 .then(() => {
                     done++;
