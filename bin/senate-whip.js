@@ -84,6 +84,12 @@ var senateConverter = {
             filibusterReformCitation: senator.filibusterReformCitation || "",
             dcStatehoodStatus: senator.dcStatehoodStatusNo,
             dcStatehoodCitation: senator.dcStatehoodCitation || "",
+            hr1Status: senator.hr1StatusNo,
+            hr1Citation: senator.hr1Citation || "",
+            hr4Status: senator.hr4statusNo || "",
+            hr4Citation: senator.hr4Citation || "",
+            impeachmentTrialStatus: senator.impeachmentStatusNo,
+            impeachmentTrialCitation: senator.impeachmentTrialCitation || "",
             quote: senator.quote,
             govtrack_id: senator.govtrack_id,
             state: senator.state,
@@ -145,6 +151,12 @@ googleMethods
                 electionOldQuote,
                 impeachmentStatus,
                 impeachmentCitation,
+                impeachmentTrialStatus, 
+                impeachmentTrialCitation,
+                hr1Status,
+                hr1Citation,
+                hr4status, 
+                hr4Citation
             ] = row;
             let quote = null;
             if (quoteText) {
@@ -160,7 +172,7 @@ googleMethods
                 return;
 
             }
-            const formatNumber = (status) => status.split('. ')[0];
+            const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
             const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
                 .get();
             const data = snapshot.data();
@@ -168,9 +180,13 @@ googleMethods
             const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
             const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
             const electionStatusCitation = electionAcknowledgmentCitation;
-            const impeachmentStatusNo = impeachmentStatus ? impeachmentStatus.split('. ')[0] : "3";
-            const dcStatehoodStatusNo = dcStatehoodStatus ? formatNumber(dcStatehoodStatus) : "4";
-            const filibusterReformStatusNo = filibusterReformStatus ? formatNumber(filibusterReformStatus) : "4";
+            const impeachmentStatusNo = formatNumber(impeachmentStatus, "3");
+            const dcStatehoodStatusNo = formatNumber(dcStatehoodStatus, "3");
+            const filibusterReformStatusNo = formatNumber(filibusterReformStatus, "3");
+            const impeachmentTrialStatusNo = formatNumber(impeachmentTrialStatus, "3");
+            const hr1StatusNo = formatNumber(hr1Status, "3");
+            const hr4statusNo = formatNumber(hr4status, "3");
+
             if (!data) {
                 done++;
                 return console.log(memberId)
@@ -191,6 +207,12 @@ googleMethods
                     filibusterReformCitation: filibusterReformCitation || "",
                     dcStatehoodStatusNo,
                     dcStatehoodCitation: dcStatehoodCitation || "",
+                    hr1StatusNo,
+                    hr1Citation,
+                    hr4statusNo,
+                    hr4Citation,
+                    impeachmentTrialStatusNo,
+                    impeachmentTrialCitation
                 })
             const dataToWrite = senateConverter.toFirestore(senator);
             // for (const key in dataToWrite) {
