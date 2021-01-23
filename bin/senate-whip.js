@@ -93,7 +93,7 @@ var senateConverter = {
             quote: senator.quote,
             govtrack_id: senator.govtrack_id,
             state: senator.state,
-            seniority: senator.seniority,
+            seniority: senator.seniority || null,
             contact: {
                 phone: senator.contact.phone || null,
                 address: senator.contact.address || null,
