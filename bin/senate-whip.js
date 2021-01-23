@@ -117,7 +117,7 @@ const sheets = google.sheets({
     auth: oAuth2Client
 });
 googleMethods
-    .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AB101")
+    .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AH101")
     .then(googleRows => {
         const total = googleRows.length;
         let done = 0;
