@@ -88,7 +88,7 @@ var senateConverter = {
             hr1Citation: senator.hr1Citation || "",
             hr4Status: senator.hr4statusNo || "",
             hr4Citation: senator.hr4Citation || "",
-            impeachmentTrialStatus: senator.impeachmentStatusNo,
+            impeachmentTrialStatus: senator.impeachmentTrialStatusNo,
             impeachmentTrialCitation: senator.impeachmentTrialCitation || "",
             quote: senator.quote,
             govtrack_id: senator.govtrack_id,
