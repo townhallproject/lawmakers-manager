@@ -96,7 +96,7 @@ const sheets = google.sheets({
 });
 
 const getMetaData = (callback) => {
-    return googleMethods.read(sheets, SHEETS_ID, "Whip Count Metadata!A2:K")
+    return googleMethods.read(sheets, SHEETS_ID, "Whip Count Metadata!A2:M")
         .then(googleRows => {
             const rows = googleRows.filter((row) => row[0]); //has ID
             const total = rows.length;
@@ -104,12 +104,14 @@ const getMetaData = (callback) => {
             const topics = [];
             let endColumn = "A"
             return rows.forEach(async (row, index) => {
-                const [id, name, description, statusText1, statusText2, statusText3, statusText4, statusText5, statusColumn, citationColumn, active] = row
+                const [id, name, description, aboutLink, aboutLinkText, statusText1, statusText2, statusText3, statusText4, statusText5, statusColumn, citationColumn, active] = row
 
                 const dataToWrite = {
                     id,
                     name,
                     description,
+                    aboutLink,
+                    aboutLinkText,
                     statusText1,
                     statusText2,
                     statusText3,
@@ -119,6 +121,7 @@ const getMetaData = (callback) => {
                     citationColumn,
                     active: active === 'TRUE'
                 }
+                console.log(dataToWrite)
                 if (googleMethods.convertColumnToNumber(citationColumn) > googleMethods.convertColumnToNumber(endColumn)) {
                     endColumn = citationColumn
                 }
