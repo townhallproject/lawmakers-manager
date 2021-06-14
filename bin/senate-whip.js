@@ -30,16 +30,11 @@ const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl)
 oAuth2Client.credentials = currentToken;
 
 class Senator {
-    constructor(opts, status, statusCitation, quote, additionalStatuses) {
+    constructor(opts, issues) {
         this.displayName = opts.displayName;
         this.party = opts.party;
-        this.status = status;
-        this.statusCitation = statusCitation;
-        this.quote = quote;
 
-        for (const key in additionalStatuses) {
-            this[key] = additionalStatuses[key];
-        }
+        this.issues = issues
         this.last_name = opts.last_name || null;
         this.first_name = opts.first_name || null;
         this.govtrack_id = opts.govtrack_id;
@@ -73,24 +68,7 @@ var senateConverter = {
             last_name: senator.last_name,
             first_name: senator.first_name,
             party: senator.party,
-            status: senator.status,
-            statusCitation: senator.statusCitation,
-            nomineeStatus: senator.nomineeStatusNo || null,
-            electionAcknowledgmentStatus: senator.electionStatusNo,
-            electionAcknowledgmentCitation: senator.electionStatusCitation || "",
-            impeachmentStatus: senator.impeachmentStatusNo,
-            impeachmentCitation: senator.impeachmentCitation || "",
-            filibusterReformStatus: senator.filibusterReformStatusNo,
-            filibusterReformCitation: senator.filibusterReformCitation || "",
-            dcStatehoodStatus: senator.dcStatehoodStatusNo,
-            dcStatehoodCitation: senator.dcStatehoodCitation || "",
-            hr1Status: senator.hr1StatusNo,
-            hr1Citation: senator.hr1Citation || "",
-            hr4Status: senator.hr4statusNo || "",
-            hr4Citation: senator.hr4Citation || "",
-            impeachmentTrialStatus: senator.impeachmentTrialStatusNo,
-            impeachmentTrialCitation: senator.impeachmentTrialCitation || "",
-            quote: senator.quote,
+            issues: senator.issues,
             govtrack_id: senator.govtrack_id,
             state: senator.state,
             seniority: senator.seniority || null,
@@ -107,7 +85,7 @@ var senateConverter = {
     },
     fromFirestore: function (snapshot, options) {
         const data = snapshot.data(options);
-        return new Senator(data, data.status)
+        return new Senator(data, data.issues)
     }
 }
 
@@ -118,12 +96,13 @@ const sheets = google.sheets({
 });
 
 const getMetaData = (callback) => {
-    return googleMethods.read(sheets, SHEETS_ID, "Whip Count Metadata!A:K")
+    return googleMethods.read(sheets, SHEETS_ID, "Whip Count Metadata!A2:K")
         .then(googleRows => {
             const rows = googleRows.filter((row) => row[0]); //has ID
             const total = rows.length;
             let done = 0;
             const topics = [];
+            let endColumn = "A"
             return rows.forEach(async (row, index) => {
                 const [id, name, description, statusText1, statusText2, statusText3, statusText4, statusText5, statusColumn, citationColumn, active] = row
 
@@ -140,13 +119,16 @@ const getMetaData = (callback) => {
                     citationColumn,
                     active: active === 'TRUE'
                 }
+                if (googleMethods.convertColumnToNumber(citationColumn) > googleMethods.convertColumnToNumber(endColumn)) {
+                    endColumn = citationColumn
+                }
                 topics.push(dataToWrite)
                 return firebasedb.firestore.collection('whip_count_metadata').doc(id).set(dataToWrite)
                     .then(() => {
                         done++;
                         console.log(done, total)
                         if (done === total) {
-                            callback(topics);
+                            callback(endColumn, topics);
 
                         } else {
                             return false;
@@ -161,9 +143,10 @@ const getMetaData = (callback) => {
         })
 }
 
-const getMemberData = (topics) => {
+const getMemberData = (endColumn, topics) => {
+    console.log(endColumn)
     googleMethods
-        .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AH101")
+        .read(sheets, SHEETS_ID, `[PUBLIC DATA] Whip Count!A2:${endColumn}101`)
         .then(googleRows => {
             const total = googleRows.length;
             let done = 0;
@@ -173,65 +156,31 @@ const getMemberData = (topics) => {
                     firstName,
                     lastName,
                     party,
-                    status,
-                    statusCitation,
-                    quoteText,
-                    quoteCitation,
-                    quoteYear,
-                    nomineeStatus,
-                    nomineeStatusCitation,
-                    scotusExpansionStatus,
-                    scotusExpansionCitation,
-                    lowerCourtExpansionStatus,
-                    lowerCourtExpansionCitation,
-                    courtTermLimitsStatus,
-                    courtTermLimitsCitation,
-                    filibusterReformStatus,
-                    filibusterReformCitation,
-                    ethicsTransparencyStatus,
-                    ethicsTransparencyCitation,
-                    dcStatehoodStatus,
-                    dcStatehoodCitation,
-                    electionAcknowledgmentStatus,
-                    electionAcknowledgmentCitation,
-                    electionOldQuote,
-                    impeachmentStatus,
-                    impeachmentCitation,
-                    impeachmentTrialStatus,
-                    impeachmentTrialCitation,
-                    hr1Status,
-                    hr1Citation,
-                    hr4status,
-                    hr4Citation
                 ] = row;
-                let quote = null;
-                if (quoteText) {
-                    quote = {
-                        text: quoteText,
-                        citation: quoteCitation || null,
-                        year: quoteYear || null,
+                const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
+
+                const issues = topics.reduce((acc, topic) => {
+                    const statusIndex = googleMethods.convertColumnToNumber(topic.statusColumn) - 1;
+                    const citationIndex = googleMethods.convertColumnToNumber(topic.citationColumn) - 1;
+
+                    const status = formatNumber(row[statusIndex], "3");
+                    const citation = row[citationIndex] || "";
+                    acc[topic.id] = {
+                        status,
+                        citation,
                     }
-                }
+                    return acc;
+                }, {});
+
                 if (!memberId) {
                     console.log(row)
                     done++;
                     return;
 
                 }
-                const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
                 const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
                     .get();
                 const data = snapshot.data();
-                const statusNo = status ? status.split('. ')[0] : "6";
-                const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
-                const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
-                const electionStatusCitation = electionAcknowledgmentCitation;
-                const impeachmentStatusNo = formatNumber(impeachmentStatus, "3");
-                const dcStatehoodStatusNo = formatNumber(dcStatehoodStatus, "3");
-                const filibusterReformStatusNo = formatNumber(filibusterReformStatus, "3");
-                const impeachmentTrialStatusNo = formatNumber(impeachmentTrialStatus, "3");
-                const hr1StatusNo = formatNumber(hr1Status, "3");
-                const hr4statusNo = formatNumber(hr4status, "3");
 
                 if (!data) {
                     done++;
@@ -239,26 +188,8 @@ const getMemberData = (topics) => {
                 }
                 const senator = new Senator(
                     data,
-                    statusNo,
-                    statusCitation || null,
-                    quote, {
-                        nomineeStatusNo,
-                        nomineeStatusCitation: nomineeStatusCitation || "",
-                        electionStatusNo,
-                        electionStatusCitation: electionStatusCitation || "",
-                        impeachmentStatusNo,
-                        impeachmentCitation: impeachmentCitation || "",
-                        filibusterReformStatusNo,
-                        filibusterReformCitation: filibusterReformCitation || "",
-                        dcStatehoodStatusNo,
-                        dcStatehoodCitation: dcStatehoodCitation || "",
-                        hr1StatusNo,
-                        hr1Citation,
-                        hr4statusNo,
-                        hr4Citation,
-                        impeachmentTrialStatusNo,
-                        impeachmentTrialCitation
-                    })
+                    issues,
+                )
                 const dataToWrite = senateConverter.toFirestore(senator);
                 // for (const key in dataToWrite) {
                 //     if (Object.hasOwnProperty.call(dataToWrite, key)) {
@@ -267,7 +198,7 @@ const getMemberData = (topics) => {
                 //             console.log(dataToWrite.displayName, key)
                 //         }
                 //     }
-                // }
+                // }   
                 return firebasedb.firestore.collection('whip_count_2020').doc(memberId).set(dataToWrite)
                     .then(() => {
                         done++;
