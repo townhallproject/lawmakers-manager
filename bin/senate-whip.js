@@ -30,7 +30,7 @@ const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl)
 oAuth2Client.credentials = currentToken;
 
 class Senator {
-    constructor(opts, status, statusCitation, quote, additionalStatuses ) {
+    constructor(opts, status, statusCitation, quote, additionalStatuses) {
         this.displayName = opts.displayName;
         this.party = opts.party;
         this.status = status;
@@ -38,7 +38,7 @@ class Senator {
         this.quote = quote;
 
         for (const key in additionalStatuses) {
-            this[key] = additionalStatuses[key];    
+            this[key] = additionalStatuses[key];
         }
         this.last_name = opts.last_name || null;
         this.first_name = opts.first_name || null;
@@ -116,128 +116,176 @@ const sheets = google.sheets({
     version: 'v4',
     auth: oAuth2Client
 });
-googleMethods
-    .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AH101")
-    .then(googleRows => {
-        const total = googleRows.length;
-        let done = 0;
-        googleRows.forEach(async (row, index) => {
-            const [
-                memberId, 
-                firstName, 
-                lastName, 
-                party, 
-                status, 
-                statusCitation, 
-                quoteText, 
-                quoteCitation, 
-                quoteYear,
-                nomineeStatus,
-                nomineeStatusCitation,
-                scotusExpansionStatus,
-                scotusExpansionCitation,
-                lowerCourtExpansionStatus, 
-                lowerCourtExpansionCitation,
-                courtTermLimitsStatus,
-                courtTermLimitsCitation,
-                filibusterReformStatus,
-                filibusterReformCitation,
-                ethicsTransparencyStatus,
-                ethicsTransparencyCitation,
-                dcStatehoodStatus,
-                dcStatehoodCitation,
-                electionAcknowledgmentStatus,
-                electionAcknowledgmentCitation,
-                electionOldQuote,
-                impeachmentStatus,
-                impeachmentCitation,
-                impeachmentTrialStatus, 
-                impeachmentTrialCitation,
-                hr1Status,
-                hr1Citation,
-                hr4status, 
-                hr4Citation
-            ] = row;
-            let quote = null;
-            if (quoteText) {
-                quote = {
-                    text: quoteText,
-                    citation: quoteCitation || null,
-                    year: quoteYear || null,
+
+const getMetaData = (callback) => {
+    return googleMethods.read(sheets, SHEETS_ID, "Whip Count Metadata!A:K")
+        .then(googleRows => {
+            const rows = googleRows.filter((row) => row[0]); //has ID
+            const total = rows.length;
+            let done = 0;
+            const topics = [];
+            return rows.forEach(async (row, index) => {
+                const [id, name, description, statusText1, statusText2, statusText3, statusText4, statusText5, statusColumn, citationColumn, active] = row
+
+                const dataToWrite = {
+                    id,
+                    name,
+                    description,
+                    statusText1,
+                    statusText2,
+                    statusText3,
+                    statusText4,
+                    statusText5,
+                    statusColumn,
+                    citationColumn,
+                    active: active === 'TRUE'
                 }
-            }
-            if (!memberId) {
-                console.log(row)
-                done++;
-                return;
+                topics.push(dataToWrite)
+                return firebasedb.firestore.collection('whip_count_metadata').doc(id).set(dataToWrite)
+                    .then(() => {
+                        done++;
+                        console.log(done, total)
+                        if (done === total) {
+                            callback(topics);
 
-            }
-            const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
-            const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
-                .get();
-            const data = snapshot.data();
-            const statusNo = status ? status.split('. ')[0] : "6";
-            const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
-            const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
-            const electionStatusCitation = electionAcknowledgmentCitation;
-            const impeachmentStatusNo = formatNumber(impeachmentStatus, "3");
-            const dcStatehoodStatusNo = formatNumber(dcStatehoodStatus, "3");
-            const filibusterReformStatusNo = formatNumber(filibusterReformStatus, "3");
-            const impeachmentTrialStatusNo = formatNumber(impeachmentTrialStatus, "3");
-            const hr1StatusNo = formatNumber(hr1Status, "3");
-            const hr4statusNo = formatNumber(hr4status, "3");
+                        } else {
+                            return false;
+                        }
+                    }).catch((err) => {
 
-            if (!data) {
-                done++;
-                return console.log(memberId)
-            }
-            const senator = new Senator(
-                data, 
-                statusNo, 
-                statusCitation || null, 
-                quote,
-                {
-                    nomineeStatusNo,
-                    nomineeStatusCitation: nomineeStatusCitation || "",
-                    electionStatusNo,
-                    electionStatusCitation: electionStatusCitation || "",
-                    impeachmentStatusNo,
-                    impeachmentCitation: impeachmentCitation || "",
-                    filibusterReformStatusNo,
-                    filibusterReformCitation: filibusterReformCitation || "",
-                    dcStatehoodStatusNo,
-                    dcStatehoodCitation: dcStatehoodCitation || "",
-                    hr1StatusNo,
-                    hr1Citation,
-                    hr4statusNo,
-                    hr4Citation,
-                    impeachmentTrialStatusNo,
-                    impeachmentTrialCitation
-                })
-            const dataToWrite = senateConverter.toFirestore(senator);
-            // for (const key in dataToWrite) {
-            //     if (Object.hasOwnProperty.call(dataToWrite, key)) {
-            //         const element = dataToWrite[key];
-            //         if (element === undefined) {
-            //             console.log(dataToWrite.displayName, key)
-            //         }
-            //     }
-            // }
-            return firebasedb.firestore.collection('whip_count_2020').doc(memberId).set(dataToWrite)
-                .then(() => {
-                    done++;
-                    if (done === total) {
-                        process.exit(0)
+                        console.log(dataToWrite, err)
+                    })
 
-                    }
-                }).catch((err) => {
+            })
 
-                    console.log(dataToWrite, err)
-                })
-       
         })
-    })
-    .catch(err => {
-        console.log("error reading sheet:", err.message)
-        process.exit(1)
-    })
+}
+
+const getMemberData = (topics) => {
+    googleMethods
+        .read(sheets, SHEETS_ID, "[PUBLIC DATA] Whip Count!A2:AH101")
+        .then(googleRows => {
+            const total = googleRows.length;
+            let done = 0;
+            googleRows.forEach(async (row, index) => {
+                const [
+                    memberId,
+                    firstName,
+                    lastName,
+                    party,
+                    status,
+                    statusCitation,
+                    quoteText,
+                    quoteCitation,
+                    quoteYear,
+                    nomineeStatus,
+                    nomineeStatusCitation,
+                    scotusExpansionStatus,
+                    scotusExpansionCitation,
+                    lowerCourtExpansionStatus,
+                    lowerCourtExpansionCitation,
+                    courtTermLimitsStatus,
+                    courtTermLimitsCitation,
+                    filibusterReformStatus,
+                    filibusterReformCitation,
+                    ethicsTransparencyStatus,
+                    ethicsTransparencyCitation,
+                    dcStatehoodStatus,
+                    dcStatehoodCitation,
+                    electionAcknowledgmentStatus,
+                    electionAcknowledgmentCitation,
+                    electionOldQuote,
+                    impeachmentStatus,
+                    impeachmentCitation,
+                    impeachmentTrialStatus,
+                    impeachmentTrialCitation,
+                    hr1Status,
+                    hr1Citation,
+                    hr4status,
+                    hr4Citation
+                ] = row;
+                let quote = null;
+                if (quoteText) {
+                    quote = {
+                        text: quoteText,
+                        citation: quoteCitation || null,
+                        year: quoteYear || null,
+                    }
+                }
+                if (!memberId) {
+                    console.log(row)
+                    done++;
+                    return;
+
+                }
+                const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
+                const snapshot = await firebasedb.firestore.collection('office_people').doc(memberId)
+                    .get();
+                const data = snapshot.data();
+                const statusNo = status ? status.split('. ')[0] : "6";
+                const nomineeStatusNo = nomineeStatus ? nomineeStatus.split('. ')[0] : "3";
+                const electionStatusNo = electionAcknowledgmentStatus ? electionAcknowledgmentStatus.split('. ')[0] : "4";
+                const electionStatusCitation = electionAcknowledgmentCitation;
+                const impeachmentStatusNo = formatNumber(impeachmentStatus, "3");
+                const dcStatehoodStatusNo = formatNumber(dcStatehoodStatus, "3");
+                const filibusterReformStatusNo = formatNumber(filibusterReformStatus, "3");
+                const impeachmentTrialStatusNo = formatNumber(impeachmentTrialStatus, "3");
+                const hr1StatusNo = formatNumber(hr1Status, "3");
+                const hr4statusNo = formatNumber(hr4status, "3");
+
+                if (!data) {
+                    done++;
+                    return console.log(memberId)
+                }
+                const senator = new Senator(
+                    data,
+                    statusNo,
+                    statusCitation || null,
+                    quote, {
+                        nomineeStatusNo,
+                        nomineeStatusCitation: nomineeStatusCitation || "",
+                        electionStatusNo,
+                        electionStatusCitation: electionStatusCitation || "",
+                        impeachmentStatusNo,
+                        impeachmentCitation: impeachmentCitation || "",
+                        filibusterReformStatusNo,
+                        filibusterReformCitation: filibusterReformCitation || "",
+                        dcStatehoodStatusNo,
+                        dcStatehoodCitation: dcStatehoodCitation || "",
+                        hr1StatusNo,
+                        hr1Citation,
+                        hr4statusNo,
+                        hr4Citation,
+                        impeachmentTrialStatusNo,
+                        impeachmentTrialCitation
+                    })
+                const dataToWrite = senateConverter.toFirestore(senator);
+                // for (const key in dataToWrite) {
+                //     if (Object.hasOwnProperty.call(dataToWrite, key)) {
+                //         const element = dataToWrite[key];
+                //         if (element === undefined) {
+                //             console.log(dataToWrite.displayName, key)
+                //         }
+                //     }
+                // }
+                return firebasedb.firestore.collection('whip_count_2020').doc(memberId).set(dataToWrite)
+                    .then(() => {
+                        done++;
+                        if (done === total) {
+                            process.exit(0)
+
+                        }
+                    }).catch((err) => {
+
+                        console.log(dataToWrite, err)
+                    })
+
+            })
+        })
+        .catch(err => {
+            console.log("error reading sheet:", err.message)
+            process.exit(1)
+        })
+}
+
+getMetaData(getMemberData)
