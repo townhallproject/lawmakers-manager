@@ -112,16 +112,11 @@ const getMetaData = (callback) => {
                     description,
                     aboutLink,
                     aboutLinkText,
-                    statusText1,
-                    statusText2,
-                    statusText3,
-                    statusText4,
-                    statusText5,
+                    statusText: [statusText1, statusText2, statusText3, statusText4, statusText5],
                     statusColumn,
                     citationColumn,
                     active: active === 'TRUE'
                 }
-                console.log(dataToWrite)
                 if (googleMethods.convertColumnToNumber(citationColumn) > googleMethods.convertColumnToNumber(endColumn)) {
                     endColumn = citationColumn
                 }
@@ -129,7 +124,6 @@ const getMetaData = (callback) => {
                 return firebasedb.firestore.collection('whip_count_metadata').doc(id).set(dataToWrite)
                     .then(() => {
                         done++;
-                        console.log(done, total)
                         if (done === total) {
                             callback(endColumn, topics);
 
@@ -147,7 +141,7 @@ const getMetaData = (callback) => {
 }
 
 const getMemberData = (endColumn, topics) => {
-    console.log(endColumn)
+    console.log("LAST COLUMN TO READ", endColumn)
     googleMethods
         .read(sheets, SHEETS_ID, `[PUBLIC DATA] Whip Count!A2:${endColumn}101`)
         .then(googleRows => {
