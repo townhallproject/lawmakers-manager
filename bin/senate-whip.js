@@ -154,8 +154,15 @@ const getMemberData = (endColumn, topics) => {
                     lastName,
                     party,
                 ] = row;
-                const formatNumber = (status, defaultValue) => status ? status.split('. ')[0] : defaultValue;
-
+                const formatNumber = (status, defaultValue) => {
+                    // if (status) {
+                    //     const splitResult = status.split(/(. |.\t)/g)[0];
+                    //     if (isNaN(splitResult)) {
+                    //         console.log(status, status.split('. '))
+                    //     }
+                    // }
+                    return status ? status.split(/(. |.\t)/g)[0] : defaultValue;
+                }
                 const issues = topics.reduce((acc, topic) => {
                     const statusIndex = googleMethods.convertColumnToNumber(topic.statusColumn) - 1;
                     const citationIndex = googleMethods.convertColumnToNumber(topic.citationColumn) - 1;
