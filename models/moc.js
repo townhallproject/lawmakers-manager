@@ -276,7 +276,7 @@ class Moc {
                 }
             }
             if (!isEmpty(newRole)) {
-                console.log('update role', dataInDatabase.displayName)
+                console.log('update role', dataInDatabase.displayName, newRole)
                 toAdd.roles = this.getUpdatedRoles(dataInDatabase.current_office_index, dataInDatabase.roles, newRole)
             }
         } else {
