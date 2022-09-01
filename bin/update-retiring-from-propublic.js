@@ -8,7 +8,7 @@ const ErrorReport = require('../lib/errorReporting.js');
 const  { map, filter }  = require('lodash');
 const propublicaAPI = process.env.PROPUBLICA;
 
-const oldUrl = 'https://api.propublica.org/congress/v1/116/house/members/leaving.json'
+const oldUrl = 'https://api.propublica.org/congress/v1/117/house/members/leaving.json'
 
 function getRetiringMembers() {
     return request

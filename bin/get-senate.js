@@ -8,7 +8,7 @@ const firebasedb = require('../lib/setupFirebase.js');
 const ErrorReport = require('../lib/errorReporting.js');
 const Moc = require('../models/moc');
 const propublicaAPI = process.env.PROPUBLICA;
-const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
+const wholeSenate = 'https://api.propublica.org/congress/v1/117/senate/members.json';
 
 function getProPublicaSenate() {
     return request

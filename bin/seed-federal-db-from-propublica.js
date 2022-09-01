@@ -5,8 +5,8 @@ const ErrorReport = require('../lib/errorReporting.js');
 const Moc = require('../models/moc');
 
 const propublicaAPI = process.env.PROPUBLICA;
-const wholeHouse = 'https://api.propublica.org/congress/v1/116/house/members.json';
-const wholeSenate = 'https://api.propublica.org/congress/v1/116/senate/members.json';
+const wholeHouse = 'https://api.propublica.org/congress/v1/117/house/members.json';
+const wholeSenate = 'https://api.propublica.org/congress/v1/117/senate/members.json';
 
 function getHouse() {
     return request
